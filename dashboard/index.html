@@ -68,6 +68,9 @@
   .valve { fill: var(--ok); stroke: var(--panel); stroke-width: 2; transition: fill .4s; }
   .valve.closed { fill: var(--muted); }
   .valve.suspect { fill: var(--crit); }
+  .pump { fill: var(--muted); stroke: var(--panel); stroke-width: 2; transition: fill .4s; }
+  .pump.running { fill: var(--ok); }
+  .pump.suspect { fill: var(--crit); }
   .badge-ring { fill: var(--crit); }
   .badge-mark { fill: #fff; font: 700 18px system-ui; text-anchor: middle; }
   .badge-svg { animation: pulse 1.1s ease-in-out infinite; }
@@ -175,6 +178,14 @@
         <circle r="17" class="badge-ring"/>
         <text class="badge-mark" x="0" y="5">!</text>
       </g>
+
+      <!-- pump (fills the tank; dry-run protection loop) -->
+      <circle id="pump" class="pump" cx="80" cy="230" r="12"/>
+      <text id="pump-label" class="mini" x="80" y="258">pump</text>
+      <g id="badge-pump" class="badge-svg" transform="translate(80,230)" visibility="hidden">
+        <circle r="17" class="badge-ring"/>
+        <text class="badge-mark" x="0" y="5">!</text>
+      </g>
     </svg>
 
     <div id="strip">
@@ -182,6 +193,7 @@
       <div class="stat"><span class="stat-k">Line flow</span><span class="stat-v" id="s-flow">—</span></div>
       <div class="stat"><span class="stat-k">Tank level</span><span class="stat-v" id="s-tank">—</span></div>
       <div class="stat"><span class="stat-k">Main valve</span><span class="stat-v" id="s-valve">—</span></div>
+      <div class="stat"><span class="stat-k">Pump</span><span class="stat-v" id="s-pump">—</span></div>
       <div class="stat"><span class="stat-k">Water state</span><span class="stat-v" id="s-water">—</span></div>
     </div>
   </div>
@@ -308,6 +320,10 @@
     const valve = pv("main_valve.valve_state", "—");
     const leak = !!pv("virtual.water.leak_suspected", false);
     const suspect = pv("health.main_valve") === "suspect";
+    const pumpState = pv("pump.pump_state", "—");
+    const pumpCurrent = Number(pv("pump.current_a", NaN));
+    const dryrun = !!pv("virtual.pump.dryrun_suspected", false);
+    const pumpSuspect = pv("health.pump") === "suspect";
 
     // occupancy glow
     $("occupant").classList.toggle("home", occupied);
@@ -336,12 +352,23 @@
     $("valve-label").textContent = "valve " + (valve === "—" ? "" : valve);
     $("badge-valve").setAttribute("visibility", (suspect || leak) ? "visible" : "hidden");
 
+    // pump state + dry-run badge
+    const pu = $("pump");
+    pu.classList.toggle("running", pumpState === "on" && !pumpSuspect);
+    pu.classList.toggle("suspect", pumpSuspect || dryrun);
+    $("pump-label").textContent = "pump " + (pumpState === "—" ? "" : pumpState);
+    $("badge-pump").setAttribute("visibility", (pumpSuspect || dryrun) ? "visible" : "hidden");
+
     // status strip
     setStat("s-occ", occupied ? "Occupied" : "Empty", occupied ? "ok" : "");
     setStat("s-flow", flow.toFixed(2) + " L/min", flowing ? (leak ? "alarm" : "") : "");
     setStat("s-tank", Number.isNaN(level) ? "—" : level.toFixed(0) + "%");
     setStat("s-valve", valve + (suspect ? " · SUSPECT" : ""), suspect ? "alarm" : (valve === "closed" ? "" : "ok"));
-    setStat("s-water", leak ? "LEAK SUSPECTED" : "nominal", leak ? "alarm" : "ok");
+    const pumpTxt = (pumpState === "—" ? "—" : pumpState)
+      + (Number.isNaN(pumpCurrent) ? "" : " · " + pumpCurrent.toFixed(1) + " A")
+      + (pumpSuspect ? " · SUSPECT" : "");
+    setStat("s-pump", pumpTxt, (pumpSuspect || dryrun) ? "alarm" : (pumpState === "on" ? "ok" : ""));
+    setStat("s-water", leak ? "LEAK SUSPECTED" : (dryrun ? "PUMP DRY-RUN" : "nominal"), (leak || dryrun) ? "alarm" : "ok");
   }
 
   // --- event feed (cognitive topics only; sensor points live in the table) ---
