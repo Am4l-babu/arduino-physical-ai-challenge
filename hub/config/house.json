@@ -1,0 +1,27 @@
+{
+  "assets": [
+    { "id": "municipal_supply", "type": "source", "room": "exterior" },
+    { "id": "main_valve", "type": "valve", "room": "utility", "commands": ["open", "close"] },
+    { "id": "main_line", "type": "pipe", "room": "utility" },
+    { "id": "water_tank", "type": "tank", "room": "roof" },
+    { "id": "pump", "type": "pump", "room": "utility", "commands": ["on", "off"] },
+    { "id": "kitchen_sink", "type": "fixture", "room": "kitchen" },
+    { "id": "bathroom_shower", "type": "fixture", "room": "bathroom" },
+    { "id": "living_radar", "type": "sensor", "room": "living" },
+    { "id": "living_pir", "type": "sensor", "room": "living" },
+    { "id": "line_flow_meter", "type": "sensor", "room": "utility" },
+    { "id": "tank_level_probe", "type": "sensor", "room": "roof" }
+  ],
+  "edges": [
+    { "src": "municipal_supply", "rel": "feeds", "dst": "main_valve" },
+    { "src": "main_valve", "rel": "feeds", "dst": "main_line" },
+    { "src": "main_line", "rel": "feeds", "dst": "kitchen_sink" },
+    { "src": "main_line", "rel": "feeds", "dst": "bathroom_shower" },
+    { "src": "main_line", "rel": "feeds", "dst": "water_tank" },
+    { "src": "water_tank", "rel": "feeds", "dst": "pump" },
+    { "src": "line_flow_meter", "rel": "senses", "dst": "main_line" },
+    { "src": "tank_level_probe", "rel": "senses", "dst": "water_tank" },
+    { "src": "living_radar", "rel": "senses", "dst": "living" },
+    { "src": "living_pir", "rel": "senses", "dst": "living" }
+  ]
+}
