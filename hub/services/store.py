@@ -104,3 +104,61 @@ class Store:
         stats = self.stats()
         self.db.close()
         return stats
+
+
+class JournalReader:
+    """Read-side of the journal: rebuilds a recorded run as a replayable timeline.
+
+    Emits the same frame contract the live WebSocket uses (`type: point` /
+    `type: event`), so the dashboard renders playback through exactly the same
+    code path as a live incident — no second renderer to keep in sync.
+    """
+
+    # within one tick: points settle before the actions/alerts they trigger
+    _ORDER = {"point": 0, "event": 1}
+
+    def __init__(self, path) -> None:
+        self.path = Path(path)
+        self.db = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True)
+
+    def timeline(self) -> list:
+        frames = []
+        for t, key, value, source, conf in self.db.execute(
+                "SELECT t, key, value, source, confidence FROM points_journal"):
+            frames.append({"type": "point", "t": t, "key": key,
+                           "value": json.loads(value), "source": source,
+                           "confidence": conf})
+
+        for (aid, t_disp, topic, cause, evidence, expectation,
+             status, retries, t_res) in self.db.execute(
+                "SELECT id, t_dispatched, topic, cause, evidence, expectation, "
+                "status, retries, t_resolved FROM actions"):
+            frames.append({"type": "event", "t": t_disp,
+                           "topic": "domora/act/dispatched",
+                           "payload": {"action": {
+                               "__type": "action", "id": aid, "command_topic": topic,
+                               "cause": cause, "evidence": json.loads(evidence),
+                               "expectation": {"describe": expectation},
+                               "status": status, "retries": retries,
+                               "dispatched_at": t_disp}}})
+            if status == "confirmed" and t_res is not None:
+                frames.append({"type": "event", "t": t_res,
+                               "topic": "domora/verify/confirmed",
+                               "payload": {"action_id": aid}})
+
+        for t, topic, payload in self.db.execute(
+                "SELECT t, topic, payload FROM events"):
+            frames.append({"type": "event", "t": t, "topic": topic,
+                           "payload": json.loads(payload)})
+
+        frames.sort(key=lambda f: (f["t"], self._ORDER.get(f["type"], 9)))
+        return frames
+
+    def t_max(self) -> int:
+        rows = [self.db.execute("SELECT MAX(t) FROM points_journal").fetchone()[0],
+                self.db.execute("SELECT MAX(t_resolved) FROM actions").fetchone()[0],
+                self.db.execute("SELECT MAX(t) FROM events").fetchone()[0]]
+        return max([r for r in rows if r is not None], default=0)
+
+    def close(self) -> None:
+        self.db.close()

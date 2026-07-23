@@ -23,6 +23,7 @@ class Planner(Agent):
 
     def tick(self, t: int) -> None:
         self._rule_leak_response(t)
+        self._rule_dryrun_response(t)
 
     def _rule_leak_response(self, t: int) -> None:
         if not self.twin.get("virtual.water.leak_suspected"):
@@ -51,6 +52,33 @@ class Planner(Agent):
             ),
         )
         self.say(t, f"plan: close {shutoff} (upstream of leak) — "
+                    f"expect {action.expectation.describe} within {action.expectation.deadline_ticks} ticks")
+        if self.safety.check(action):
+            self._open_causes.add(cause)
+            self.bus.publish("domora/plan/action", {"action": action})
+
+    def _rule_dryrun_response(self, t: int) -> None:
+        if not self.twin.get("virtual.pump.dryrun_suspected"):
+            return
+        cause = "dryrun:pump"
+        if cause in self._open_causes:
+            return
+
+        action = Action(
+            command_topic="domora/cmd/pump/off",
+            payload={},
+            cause=cause,
+            evidence=self.twin.get("virtual.pump.dryrun_evidence", {}),
+            expectation=Expectation(
+                # Verified through the CT clamp, independent of the relay's ACK:
+                # a stopped pump draws no current.
+                point="pump.current_a",
+                predicate=lambda v: isinstance(v, (int, float)) and v < 0.2,
+                describe="pump current falls to ~0 (pump stopped)",
+                deadline_ticks=8,
+            ),
+        )
+        self.say(t, f"plan: cut pump (running dry) — "
                     f"expect {action.expectation.describe} within {action.expectation.deadline_ticks} ticks")
         if self.safety.check(action):
             self._open_causes.add(cause)

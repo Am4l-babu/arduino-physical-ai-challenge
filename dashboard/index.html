@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DOMORA — live twin</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #1a1d21; --muted: #6b7280;
+    --line: #e4e7eb; --accent: #2563eb;
+    --ok: #15803d; --ok-bg: #e7f6ec; --warn: #b45309;
+    --crit: #b91c1c; --crit-bg: #fdecec; --pending: #6b7280;
+    --mono: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --panel: #171b21; --ink: #e7eaee; --muted: #9aa3ad;
+      --line: #262c34; --accent: #5b8cff;
+      --ok: #4ade80; --ok-bg: #12261a; --warn: #fbbf24;
+      --crit: #f87171; --crit-bg: #2a1416; --pending: #9aa3ad;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding: 14px 20px; border-bottom: 1px solid var(--line);
+    background: var(--panel); position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: .5px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  #tabs { display: flex; gap: 4px; }
+  .tab {
+    font: 600 13px system-ui; cursor: pointer; color: var(--muted);
+    background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px;
+  }
+  .tab.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+  #status { margin-left: auto; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  #dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  #dot.live { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-bg); }
+  #dot.down { background: var(--crit); }
+  main { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; padding: 16px 20px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+
+  /* --- twin (SVG floor plan) --- */
+  #view-twin { padding: 16px 20px; }
+  .twin-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  #house { width: 100%; height: auto; max-height: 62vh; display: block; }
+  .room { fill: color-mix(in srgb, var(--accent) 6%, transparent); stroke: var(--line); stroke-width: 2; }
+  .room-label { fill: var(--muted); font: 600 12px system-ui; }
+  .mini { fill: var(--muted); font: 11px var(--mono); text-anchor: middle; }
+  .occupant { fill: var(--line); transition: fill .4s, filter .4s; }
+  .occupant.home { fill: var(--ok); filter: drop-shadow(0 0 8px var(--ok)); }
+  .tank-shell { fill: none; stroke: var(--muted); stroke-width: 2; }
+  .tank-fill { fill: var(--accent); opacity: .55; transition: y .5s, height .5s; }
+  .pipe-base { fill: none; stroke: var(--line); stroke-width: 8; stroke-linejoin: round; stroke-linecap: round; }
+  .pipe-flow {
+    fill: none; stroke: var(--muted); stroke-width: 8; stroke-linejoin: round; stroke-linecap: round;
+    stroke-dasharray: 1 400; opacity: 0; transition: stroke .4s, opacity .4s;
+  }
+  .pipe-flow.flowing { stroke-dasharray: 14 12; opacity: 1; animation: flow 1s linear infinite; }
+  .pipe-flow.leak { stroke: var(--crit); }
+  .pipe-flow.normal { stroke: var(--accent); }
+  @keyframes flow { to { stroke-dashoffset: -26; } }
+  .valve { fill: var(--ok); stroke: var(--panel); stroke-width: 2; transition: fill .4s; }
+  .valve.closed { fill: var(--muted); }
+  .valve.suspect { fill: var(--crit); }
+  .badge-ring { fill: var(--crit); }
+  .badge-mark { fill: #fff; font: 700 18px system-ui; text-anchor: middle; }
+  .badge-svg { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+  #strip { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .stat { flex: 1; min-width: 120px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .stat-k { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .stat-v { font: 600 16px var(--mono); }
+  .stat-v.alarm { color: var(--crit); }
+  .stat-v.ok { color: var(--ok); }
+  section > h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-left-width: 4px;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+  }
+  .card.pending { border-left-color: var(--pending); }
+  .card.confirmed { border-left-color: var(--ok); }
+  .card.failed { border-left-color: var(--crit); }
+  .card .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card .cause { font-weight: 600; }
+  .badge {
+    font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 5px;
+    text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
+  }
+  .badge.pending { color: var(--pending); background: var(--line); }
+  .badge.confirmed { color: var(--ok); background: var(--ok-bg); }
+  .badge.failed { color: var(--crit); background: var(--crit-bg); }
+  .chain { margin-top: 8px; display: grid; gap: 4px; }
+  .chain .step { display: grid; grid-template-columns: 92px 1fr; gap: 8px; font-size: 13px; }
+  .chain .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding-top: 2px; }
+  .chain .v { font-family: var(--mono); font-size: 12.5px; word-break: break-word; }
+  .chain .v.ok { color: var(--ok); }
+  .chain .v.crit { color: var(--crit); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  td.val { font-family: var(--mono); text-align: right; }
+  tr.stale td { color: var(--muted); }
+  tr.stale .k::after { content: " · stale"; color: var(--warn); font-size: 11px; }
+  #feed { max-height: 240px; overflow-y: auto; font-family: var(--mono); font-size: 12px; }
+  #feed .line { padding: 2px 0; border-bottom: 1px dotted var(--line); color: var(--muted); }
+  #feed .line b { color: var(--ink); }
+  .empty { color: var(--muted); font-style: italic; padding: 8px 2px; }
+  .life-safety { padding: 6px 20px; font-size: 11.5px; color: var(--muted); background: var(--panel); border-top: 1px solid var(--line); }
+  #pbbar {
+    display: none; align-items: center; gap: 12px;
+    padding: 10px 20px; border-bottom: 1px solid var(--line);
+    background: var(--panel); position: sticky; top: 51px; z-index: 4;
+  }
+  #pbbar.on { display: flex; }
+  #pbbar button {
+    font: 600 13px system-ui; cursor: pointer; color: #fff; background: var(--accent);
+    border: none; border-radius: 6px; padding: 6px 14px;
+  }
+  #pbbar input[type=range] { flex: 1; accent-color: var(--accent); }
+  #pbbar .t { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 96px; text-align: right; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DOMORA</h1>
+  <span class="sub" id="scenario">live twin</span>
+  <div id="tabs">
+    <button id="tab-twin" class="tab on" data-view="twin">Twin</button>
+    <button id="tab-ops" class="tab" data-view="ops">Operations</button>
+  </div>
+  <div id="status"><span id="dot"></span><span id="statustext">connecting…</span><span class="sub" id="clock"></span></div>
+</header>
+
+<div id="pbbar">
+  <button id="pbplay">▶ Play</button>
+  <input type="range" id="pbrange" min="0" max="100" value="0" />
+  <span class="t" id="pbtime">t=000 / 000</span>
+</div>
+
+<section id="view-twin">
+  <div class="twin-wrap">
+    <svg id="house" viewBox="0 0 420 300" role="img" aria-label="Schematic house twin">
+      <!-- rooms -->
+      <rect id="room-living" class="room" x="30" y="40" width="170" height="130" rx="6"/>
+      <rect id="room-kitchen" class="room" x="200" y="40" width="130" height="130" rx="6"/>
+      <text class="room-label" x="115" y="60">Living</text>
+      <text class="room-label" x="265" y="60">Kitchen</text>
+      <!-- occupancy marker -->
+      <circle id="occupant" class="occupant" cx="115" cy="115" r="13"/>
+      <text id="occupant-label" class="mini" x="115" y="150">empty</text>
+
+      <!-- tank -->
+      <rect class="tank-shell" x="352" y="40" width="44" height="110" rx="4"/>
+      <rect id="tank-fill" class="tank-fill" x="354" y="90" width="40" height="58"/>
+      <text id="tank-label" class="mini" x="374" y="166">–</text>
+      <text class="room-label" x="374" y="34" text-anchor="middle">Tank</text>
+
+      <!-- pipe: tank -> valve -> house -->
+      <path id="pipe-base" class="pipe-base" d="M374,150 L374,230 L120,230 L120,170"/>
+      <path id="pipe-flow" class="pipe-flow" d="M374,150 L374,230 L120,230 L120,170"/>
+
+      <!-- main valve on the run -->
+      <circle id="valve" class="valve" cx="247" cy="230" r="12"/>
+      <text id="valve-label" class="mini" x="247" y="258">valve</text>
+      <g id="badge-valve" class="badge-svg" transform="translate(247,230)" visibility="hidden">
+        <circle r="17" class="badge-ring"/>
+        <text class="badge-mark" x="0" y="5">!</text>
+      </g>
+    </svg>
+
+    <div id="strip">
+      <div class="stat"><span class="stat-k">Occupancy</span><span class="stat-v" id="s-occ">—</span></div>
+      <div class="stat"><span class="stat-k">Line flow</span><span class="stat-v" id="s-flow">—</span></div>
+      <div class="stat"><span class="stat-k">Tank level</span><span class="stat-v" id="s-tank">—</span></div>
+      <div class="stat"><span class="stat-k">Main valve</span><span class="stat-v" id="s-valve">—</span></div>
+      <div class="stat"><span class="stat-k">Water state</span><span class="stat-v" id="s-water">—</span></div>
+    </div>
+  </div>
+</section>
+
+<main>
+  <section>
+    <h2>Action timeline — cause → evidence → command → verification</h2>
+    <div id="timeline"><div class="empty" id="tl-empty">Waiting for the first autonomous action…</div></div>
+  </section>
+
+  <section>
+    <h2>Live points</h2>
+    <table>
+      <thead><tr><th>Point</th><th>Value</th><th>Source</th></tr></thead>
+      <tbody id="points"><tr><td colspan="3" class="empty">No twin data yet.</td></tr></tbody>
+    </table>
+    <h2 style="margin-top:18px">Event feed</h2>
+    <div id="feed"><div class="empty">—</div></div>
+  </section>
+</main>
+
+<div class="life-safety">DOMORA supplements, and never replaces, certified life-safety detectors.</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const dot = $("dot"), statustext = $("statustext");
+  const timelineEl = $("timeline"), pointsEl = $("points"), feedEl = $("feed");
+  const STALE_AFTER = 15;
+
+  let now = 0;
+  const actions = new Map();   // id -> action card model
+  const order = [];            // action ids, insertion order
+  const points = new Map();    // key -> {value, t, source}
+
+  function setStatus(state, text) {
+    dot.className = state;
+    statustext.textContent = text;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  }
+  function fmt(v) {
+    if (typeof v === "number") return Number.isInteger(v) ? v : v.toFixed(2);
+    if (v && typeof v === "object") return JSON.stringify(v);
+    return esc(v);
+  }
+
+  // --- timeline ---
+  function upsertAction(a) {
+    let m = actions.get(a.id);
+    if (!m) {
+      m = { id: a.id, status: "pending" };
+      actions.set(a.id, m);
+      order.unshift(a.id);
+    }
+    m.cause = a.cause ?? m.cause;
+    m.command = a.command_topic ?? m.command;
+    m.evidence = a.evidence ?? m.evidence;
+    if (a.expectation) m.expect = a.expectation.describe;
+    if (a.retries != null) m.retries = a.retries;
+    renderTimeline();
+  }
+  function markAction(id, status, extra) {
+    const m = actions.get(id) || { id, status: "pending" };
+    if (!actions.has(id)) { actions.set(id, m); order.unshift(id); }
+    m.status = status;
+    if (extra) Object.assign(m, extra);
+    renderTimeline();
+  }
+
+  function renderTimeline() {
+    if (!order.length) return;
+    $("tl-empty")?.remove();
+    timelineEl.innerHTML = order.map(id => {
+      const m = actions.get(id);
+      const verify = m.status === "confirmed"
+        ? `<span class="v ok">verified — ${esc(m.expect || "")}</span>`
+        : m.status === "failed"
+          ? `<span class="v crit">FAILED — ${esc(m.reason || m.expect || "")}, escalated</span>`
+          : `<span class="v">awaiting — ${esc(m.expect || "")}</span>`;
+      const ev = m.evidence && Object.keys(m.evidence).length
+        ? esc(Object.entries(m.evidence).map(([k, v]) => `${k}=${fmt(v)}`).join(", "))
+        : "—";
+      const retryNote = m.retries ? ` <span class="sub">(retried ${m.retries}×)</span>` : "";
+      return `<div class="card ${m.status}">
+        <div class="row"><span class="cause">${esc(m.cause || "action #" + m.id)}</span>
+          <span class="badge ${m.status}">${m.status}</span></div>
+        <div class="chain">
+          <div class="step"><span class="k">Evidence</span><span class="v">${ev}</span></div>
+          <div class="step"><span class="k">Command</span><span class="v">${esc(m.command || "—")}${retryNote}</span></div>
+          <div class="step"><span class="k">Verify</span>${verify}</div>
+        </div></div>`;
+    }).join("");
+  }
+
+  // --- points table ---
+  function renderPoints() {
+    if (!points.size) return;
+    const keys = [...points.keys()].sort();
+    pointsEl.innerHTML = keys.map(k => {
+      const p = points.get(k);
+      const stale = (now - p.t) > STALE_AFTER;
+      return `<tr class="${stale ? "stale" : ""}">
+        <td class="k">${esc(k)}</td>
+        <td class="val">${fmt(p.value)}</td>
+        <td>${esc(p.source)}</td></tr>`;
+    }).join("");
+  }
+
+  // --- twin (SVG floor plan): data is the graphics ---
+  const TANK_TOP = 40, TANK_H = 108;   // matches the tank-shell geometry
+  function pv(key, dflt) { const p = points.get(key); return p ? p.value : dflt; }
+  function setStat(id, text, cls) {
+    const el = $(id); el.textContent = text;
+    el.className = "stat-v" + (cls ? " " + cls : "");
+  }
+  function renderTwin() {
+    const occupied = !!pv("house.occupied", false);
+    const flow = Number(pv("tank.line.flow_lpm", 0)) || 0;
+    const level = Number(pv("water_tank.level_pct", NaN));
+    const valve = pv("main_valve.valve_state", "—");
+    const leak = !!pv("virtual.water.leak_suspected", false);
+    const suspect = pv("health.main_valve") === "suspect";
+
+    // occupancy glow
+    $("occupant").classList.toggle("home", occupied);
+    $("occupant-label").textContent = occupied ? "occupied" : "empty";
+
+    // tank fill (level% -> rect y/height)
+    const tf = $("tank-fill");
+    if (!Number.isNaN(level)) {
+      const h = Math.max(0, Math.min(100, level)) / 100 * TANK_H;
+      tf.setAttribute("y", (TANK_TOP + (TANK_H - h)).toFixed(1));
+      tf.setAttribute("height", h.toFixed(1));
+      $("tank-label").textContent = level.toFixed(0) + "%";
+    }
+
+    // pipe flow: flowing when line has flow; leak-colored when leak suspected
+    const pipe = $("pipe-flow");
+    const flowing = flow > 0.1;
+    pipe.classList.toggle("flowing", flowing);
+    pipe.classList.toggle("leak", leak);
+    pipe.classList.toggle("normal", flowing && !leak);
+
+    // valve state + suspect badge
+    const v = $("valve");
+    v.classList.toggle("closed", valve === "closed");
+    v.classList.toggle("suspect", suspect);
+    $("valve-label").textContent = "valve " + (valve === "—" ? "" : valve);
+    $("badge-valve").setAttribute("visibility", (suspect || leak) ? "visible" : "hidden");
+
+    // status strip
+    setStat("s-occ", occupied ? "Occupied" : "Empty", occupied ? "ok" : "");
+    setStat("s-flow", flow.toFixed(2) + " L/min", flowing ? (leak ? "alarm" : "") : "");
+    setStat("s-tank", Number.isNaN(level) ? "—" : level.toFixed(0) + "%");
+    setStat("s-valve", valve + (suspect ? " · SUSPECT" : ""), suspect ? "alarm" : (valve === "closed" ? "" : "ok"));
+    setStat("s-water", leak ? "LEAK SUSPECTED" : "nominal", leak ? "alarm" : "ok");
+  }
+
+  // --- event feed (cognitive topics only; sensor points live in the table) ---
+  const FEED_PREFIXES = ["domora/plan", "domora/act", "domora/verify", "domora/alert", "domora/cmd"];
+  let feedHasContent = false;
+  function feedLine(topic, t) {
+    if (!FEED_PREFIXES.some(p => topic.startsWith(p))) return;
+    if (!feedHasContent) { feedEl.innerHTML = ""; feedHasContent = true; }
+    const div = document.createElement("div");
+    div.className = "line";
+    div.innerHTML = `<b>t=${String(t).padStart(3, "0")}</b> ${esc(topic)}`;
+    feedEl.prepend(div);
+    while (feedEl.childNodes.length > 60) feedEl.removeChild(feedEl.lastChild);
+  }
+
+  // --- message routing ---
+  function handle(msg) {
+    if (typeof msg.t === "number") { now = msg.t; $("clock").textContent = "t=" + String(now).padStart(3, "0"); }
+
+    if (msg.type === "snapshot") {
+      for (const [k, p] of Object.entries(msg.points)) points.set(k, p);
+      renderPoints(); renderTwin();
+      return;
+    }
+    if (msg.type === "point") {
+      points.set(msg.key, { value: msg.value, t: msg.t, source: msg.source });
+      renderPoints(); renderTwin();
+      return;
+    }
+    if (msg.type === "event") {
+      const { topic, payload } = msg;
+      feedLine(topic, msg.t);
+      const a = payload && payload.action;
+      if ((topic === "domora/plan/action" || topic === "domora/act/dispatched") && a) upsertAction(a);
+      else if (topic === "domora/verify/confirmed") markAction(payload.action_id, "confirmed");
+      else if (topic.startsWith("domora/alert")) {
+        if (payload.action_id != null) markAction(payload.action_id, "failed", { reason: payload.reason });
+      }
+      renderTwin();
+    }
+  }
+
+  // --- state reset (for playback scrubbing) ---
+  function resetState() {
+    now = 0; actions.clear(); order.length = 0; points.clear();
+    timelineEl.innerHTML = '<div class="empty" id="tl-empty">Waiting for the first autonomous action…</div>';
+    pointsEl.innerHTML = '<tr><td colspan="3" class="empty">No twin data yet.</td></tr>';
+    feedEl.innerHTML = '<div class="empty">—</div>'; feedHasContent = false;
+  }
+
+  // --- websocket with reconnect (live mode) ---
+  function connect() {
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => setStatus("live", "live");
+    ws.onclose = () => { setStatus("down", "disconnected — retrying"); setTimeout(connect, 1500); };
+    ws.onerror = () => ws.close();
+    ws.onmessage = (e) => { try { handle(JSON.parse(e.data)); } catch (err) { console.error(err); } };
+  }
+
+  // --- playback mode: scrub a recorded journal through the same renderers ---
+  function startPlayback(data) {
+    const frames = data.timeline || [];
+    const tMax = data.t_max || 0;
+    let playing = false, timer = null;
+    const range = $("pbrange"), timeEl = $("pbtime"), playBtn = $("pbplay");
+    $("scenario").textContent = "playback · recorded incident";
+    $("pbbar").classList.add("on");
+    setStatus("live", "playback");
+    range.max = tMax;
+
+    function seek(t) {
+      resetState();
+      for (const f of frames) { if (f.t <= t) handle(f); }
+      now = t;
+      range.value = t;
+      timeEl.textContent = `t=${String(t).padStart(3, "0")} / ${String(tMax).padStart(3, "0")}`;
+      $("clock").textContent = "t=" + String(t).padStart(3, "0");
+      renderTwin();
+    }
+    function stop() { playing = false; clearInterval(timer); playBtn.textContent = "▶ Play"; }
+    function play() {
+      if (Number(range.value) >= tMax) seek(0);
+      playing = true; playBtn.textContent = "❚❚ Pause";
+      timer = setInterval(() => {
+        const t = Number(range.value) + 1;
+        if (t > tMax) { stop(); return; }
+        seek(t);
+      }, 250);
+    }
+    playBtn.onclick = () => (playing ? stop() : play());
+    range.oninput = () => { stop(); seek(Number(range.value)); };
+    seek(tMax);   // land on the resolved end-state; scrub back to watch it unfold
+  }
+
+  // --- view toggle (Twin / Operations) ---
+  function showView(name) {
+    $("view-twin").style.display = name === "twin" ? "" : "none";
+    document.querySelector("main").style.display = name === "ops" ? "grid" : "none";
+    for (const b of document.querySelectorAll(".tab")) b.classList.toggle("on", b.dataset.view === name);
+  }
+  for (const b of document.querySelectorAll(".tab")) b.onclick = () => showView(b.dataset.view);
+  showView("twin");
+
+  // --- pick mode: recorded journal if present, else live stream ---
+  fetch("/playback.json")
+    .then(r => (r.ok ? r.json() : Promise.reject()))
+    .then(startPlayback)
+    .catch(connect);
+})();
+</script>
+</body>
+</html>

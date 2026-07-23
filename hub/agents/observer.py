@@ -10,11 +10,13 @@ from hub.agents.base import Agent
 RANGES = {
     "flow_lpm": (0.0, 60.0),
     "power_w": (0.0, 25000.0),
+    "current_a": (0.0, 30.0),
     "level_pct": (0.0, 100.0),
     "radar": (0, 1),
     "pir": (0, 1),
     "fixtures_open": (0, 20),
     "valve_state": None,  # enum, checked separately
+    "pump_state": None,   # enum
 }
 
 

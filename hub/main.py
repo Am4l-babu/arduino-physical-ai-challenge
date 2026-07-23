@@ -13,6 +13,8 @@ the UNO Q run here against simulated physics.
 
 import argparse
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Callable
 
 from hub.agents.actor import Actor
 from hub.agents.energy import EnergySense
@@ -27,12 +29,18 @@ from hub.twin.graph import KnowledgeGraph
 from hub.twin.state import TwinState
 from sim.virtual_house import VirtualHouse
 from sim.virtual_loads import VirtualLoads
+from sim.virtual_pump import VirtualPump
 
 HOUSE_CONFIG = Path(__file__).parent / "config" / "house.json"
 
 
-def run(scenario: str = "leak", ticks: int = 120, quiet: bool = False,
-        journal_db: str = None) -> dict:
+def wire(scenario: str, narrate: Callable[[int, str, str], None],
+         journal_db: str = None) -> SimpleNamespace:
+    """Build one fully-wired world (bus, twin, agents, house).
+
+    The single source of truth for how the hub is assembled, shared by the
+    batch runner (`run`) and the live dashboard server (`hub.services.api`).
+    """
     bus = EventBus()
     twin = TwinState()
     graph = KnowledgeGraph.load(HOUSE_CONFIG)
@@ -43,24 +51,18 @@ def run(scenario: str = "leak", ticks: int = 120, quiet: bool = False,
         store = Store(journal_db)
         store.attach(bus, twin)
 
-    lines = []
-
-    def narrate(t: int, agent: str, message: str) -> None:
-        line = f"[t={t:03d}] {agent:<12} | {message}"
-        lines.append(line)
-        if not quiet:
-            print(line)
-
     alerts = []
     bus.subscribe("domora/alert/#", lambda topic, p: alerts.append({"topic": topic, **p}))
 
     if scenario == "energy":
         house = VirtualLoads(bus)
+    elif scenario in ("dryrun", "dryrun_stuck"):
+        house = VirtualPump(bus, stuck_relay=(scenario == "dryrun_stuck"))
     else:
         house = VirtualHouse(bus, stuck_valve=(scenario == "stuck"))
 
     ctx = (bus, twin, graph, narrate)
-    observer = Observer(*ctx)          # noqa: F841  (event-driven, no tick)
+    observer = Observer(*ctx)          # event-driven: kept alive by its bus subscription
     safety = Safety(*ctx)
     actor = Actor(*ctx)
     understander = Understander(*ctx)
@@ -71,32 +73,56 @@ def run(scenario: str = "leak", ticks: int = 120, quiet: bool = False,
 
     ticking = [understander, predictor, planner, verifier, energy]
 
+    return SimpleNamespace(
+        scenario=scenario, bus=bus, twin=twin, graph=graph, store=store,
+        alerts=alerts, house=house, ticking=ticking, observer=observer,
+        verifier=verifier, energy=energy,
+    )
+
+
+def step(world: SimpleNamespace, t: int) -> None:
+    """Advance one tick of an already-wired world."""
+    world.twin.now = t
+    world.house.tick(t)
+    for agent in world.ticking:
+        agent.tick(t)
+    if world.scenario == "energy" and t == 75:
+        # the interactive-labelling flow: user answers "what was that 1.8 kW?"
+        world.energy.label_nearest(1800, "kettle")
+
+
+def run(scenario: str = "leak", ticks: int = 120, quiet: bool = False,
+        journal_db: str = None) -> dict:
+    lines = []
+
+    def narrate(t: int, agent: str, message: str) -> None:
+        line = f"[t={t:03d}] {agent:<12} | {message}"
+        lines.append(line)
+        if not quiet:
+            print(line)
+
+    world = wire(scenario, narrate, journal_db)
+
     if not quiet:
         print(f"--- DOMORA closed-loop run · scenario: {scenario} ---")
     for t in range(ticks):
-        twin.now = t
-        house.tick(t)
-        for agent in ticking:
-            agent.tick(t)
-        if scenario == "energy" and t == 75:
-            # the interactive-labelling flow: user answers "what was that 1.8 kW?"
-            energy.label_nearest(1800, "kettle")
+        step(world, t)
 
     summary = {
         "scenario": scenario,
-        "confirmed": [a.id for a in verifier.confirmed],
-        "failed": [a.id for a in verifier.failed],
-        "alerts": alerts,
-        "valve_commands": getattr(house, "commands_received", []),
-        "final_flow_lpm": twin.get("tank.line.flow_lpm"),
-        "suspect_assets": [k for k, v in twin.snapshot().items()
+        "confirmed": [a.id for a in world.verifier.confirmed],
+        "failed": [a.id for a in world.verifier.failed],
+        "alerts": world.alerts,
+        "valve_commands": getattr(world.house, "commands_received", []),
+        "final_flow_lpm": world.twin.get("tank.line.flow_lpm"),
+        "suspect_assets": [k for k, v in world.twin.snapshot().items()
                            if k.startswith("health.") and v == "suspect"],
         "narration": lines,
     }
-    if store is not None:
-        summary["journal"] = store.close()
+    if world.store is not None:
+        summary["journal"] = world.store.close()
     if scenario == "energy":
-        summary["nilm"] = energy.report()
+        summary["nilm"] = world.energy.report()
     if not quiet:
         print("--- summary ---")
         for key in ("confirmed", "failed", "final_flow_lpm", "suspect_assets"):
@@ -106,7 +132,9 @@ def run(scenario: str = "leak", ticks: int = 120, quiet: bool = False,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the DOMORA closed loop against the virtual house")
-    parser.add_argument("--scenario", choices=["leak", "stuck", "energy"], default="leak")
+    parser.add_argument("--scenario",
+                        choices=["leak", "stuck", "energy", "dryrun", "dryrun_stuck"],
+                        default="leak")
     parser.add_argument("--ticks", type=int, default=120)
     parser.add_argument("--journal", metavar="DB", default=None,
                         help="SQLite file to journal twin changes + actions into")
