@@ -1,0 +1,86 @@
+// DOMORA TANK node — local configuration template.
+//
+// Copy this file to config.h (same directory) and fill in real values.
+// config.h is gitignored — it never enters version control.
+//
+//   cp config.h.example config.h
+
+#pragma once
+
+// --- identity (must match a CN provisioned by tools/gen_certs.py) ---
+// One combined board for the whole water side (valve, line flow, tank
+// level, pump CT, leak probes) — see nodes/README.md for why this is one
+// node, not two, and that it's a stated assumption pending the actual
+// wiring/cabling plan.
+#define NODE_ID   "fp2"
+
+// --- Wi-Fi ---
+#define WIFI_SSID   "your-ssid"
+#define WIFI_PASS   "your-password"
+
+// --- MQTT broker ---
+#define MQTT_HOST   "192.168.1.50"
+#define MQTT_PORT   8883
+
+// --- hardware actually wired ---
+#define HAS_FLOW          1   // YF-S201 line flow meter
+#define HAS_LEVEL         1   // AJ-SR04M tank level (trigger/echo mode)
+#define HAS_VALVE         1   // motorized main valve, 2-relay open/close driver
+#define HAS_PUMP_CT       1   // SCT-013-030 CT clamp on the pump feed (sensing only)
+#define HAS_PUMP_RELAY    1   // relay that can physically cut the pump — NOT in the
+                              // ordered BOM; wire in a spare 5V single-channel relay
+                              // module. Set to 0 if none is wired yet (the dry-run
+                              // loop's cut command is then a no-op logged and ignored).
+#define HAS_LEAK_PROBES   1   // 2x leak probe pairs -> the hardwired local reflex
+
+// --- relay polarity ---
+// Most 5V single-channel hobby relay modules (SRD-05VDC-SL-C style) are
+// ACTIVE-LOW: driving the IN pin LOW energizes the relay. Flip this to 0
+// if yours is active-HIGH — a very common thing to get backwards, and easy
+// to tell apart on the bench (energized = coil clicks + LED lit on most boards).
+#define RELAY_ACTIVE_LOW  1
+
+// --- pins (ESP32-C6 DevKit; adjust to your wiring) ---
+#define PIN_FLOW_PULSE      2   // interrupt-capable
+#define PIN_LEVEL_TRIG      3
+#define PIN_LEVEL_ECHO      4
+#define PIN_VALVE_OPEN      5   // relay driving the valve's "open" direction
+#define PIN_VALVE_CLOSE     6   // relay driving the valve's "close" direction
+#define PIN_PUMP_CT_ADC     0   // analog-capable pin
+#define PIN_PUMP_RELAY      7
+#define PIN_LEAK_PROBE_1    8   // INPUT_PULLDOWN; probe pair bridges to 3V3 when wet
+#define PIN_LEAK_PROBE_2    9   // a second, independent probe pair (BOM: Qty 2)
+
+// --- calibration ---
+// YF-S201 datasheet constant: frequency(Hz) = 7.5 * flow(L/min). Fixed by
+// the sensor design, not wiring — safe to hardcode.
+#define FLOW_HZ_PER_LPM         7.5f
+
+// AJ-SR04M mounted at the tank's rooftop lid, looking straight down. Distance
+// reading at an EMPTY tank (cm) and at a FULL tank (cm) — measure these two
+// points on the actual tank once it's built; these are placeholders.
+#define LEVEL_EMPTY_CM          100.0f
+#define LEVEL_FULL_CM           10.0f
+
+// CT clamp calibration: Amps-per-ADC-count depends on the clamp's turns
+// ratio AND your burden resistor value — there is no safe universal
+// constant. TODO: calibrate against a known load (a lamp, or the PZEM
+// reference from docs/BOM_ORDER.md's panel node) before trusting this.
+#define PUMP_CT_AMPS_PER_COUNT  0.01f
+
+// Valve motor timed-drive safety cutoff — stop driving after this long
+// regardless of feedback (no limit-switch wiring assumed). Tune to the
+// actual valve's travel time once it's in hand; err on the long side first,
+// then shorten once you've timed a real open/close cycle.
+#define VALVE_DRIVE_MAX_MS      15000
+
+// Leak-probe reflex debounce/latch tuning (ticks of the sense loop, not ms)
+#define LEAK_TRIP_READS         3    // consecutive wet reads before tripping
+#define LEAK_CLEAR_READS        10   // consecutive dry reads before the latch clears
+                                     // (clearing never auto-reopens the valve --
+                                     // that always requires a deliberate command)
+
+// --- timing ---
+#define SENSE_PERIOD_MS   1000   // faster than ENV: flow/leak are time-critical
+#define WIFI_TIMEOUT_MS   15000
+#define MQTT_RETRY_MS     5000
