@@ -7,7 +7,7 @@ UNO Q hub + 4 nodes, two verified closed loops, Three.js dashboard, demo rig.
 | Week | Deliverable | Exit test |
 |---|---|---|
 | 1 | ✅ Agent runtime + simulator + tests (this repo, done) · ✅ **UNO Q benchmark**: hub runtime + SQLite under 10 fake nodes' load, run on the real board — 30.3x headroom, comfortable | ✅ Loop demo runs on the UNO Q itself with headroom (30.3x, no LAN-sidecar fallback needed) |
-| 2 | MQTT bridge (`hub/services/`): real Mosquitto + mTLS, `sim` publishes through it · SQLite journaling of twin + actions | Same tests pass with the real broker in the middle |
+| 2 | ✅ MQTT bridge (`hub/services/`): real Mosquitto + mTLS, `sim` publishes through it · SQLite journaling of twin + actions — **verified beyond the dev PC**: Mosquitto deployed on the UNO Q itself, reached over real Wi-Fi from a separate machine | ✅ Same tests pass with the real broker in the middle (proven on the real board, real network, not just localhost) |
 | 3 | ENV node firmware (ESP32-C6): BME280 + radar + PIR + reed → MQTT · node config from `node.yaml` | Real room feeds the twin; occupancy fusion works on live data |
 | 4 | FLOW/POWER node: CT clamp + PZEM + YF-S201 + motorized valve · **hardwired leak reflex** independent of hub | Bench loop: real water, real valve, verified closure |
 | 5 | Dashboard v1: Three.js schematic house + WebSocket live points + event timeline with cause→evidence→action→verify chains | Judge-readable on a phone served from the hub |

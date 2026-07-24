@@ -55,7 +55,17 @@ def make_ca():
     return key, cert
 
 
-def make_cert(cn: str, ca_key, ca_cert, server: bool = False):
+def _san_entry(host: str):
+    """An extra --broker-host may be an IP (dotted) or a DNS name — the SAN
+    extension needs the right x509 type for each, or hostname verification
+    silently fails to match on some clients."""
+    try:
+        return x509.IPAddress(ipaddress.ip_address(host))
+    except ValueError:
+        return x509.DNSName(host)
+
+
+def make_cert(cn: str, ca_key, ca_cert, server: bool = False, extra_hosts=()):
     key = _key()
     builder = (
         _builder(cn, "domora-ca", key.public_key())
@@ -68,12 +78,13 @@ def make_cert(cn: str, ca_key, ca_cert, server: bool = False):
         )
     )
     if server:
-        builder = builder.add_extension(
-            x509.SubjectAlternativeName(
-                [x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]
-            ),
-            critical=False,
-        )
+        # localhost/127.0.0.1 always included (dev-PC testing keeps working);
+        # real nodes connect over the LAN, so the broker's actual reachable
+        # address(es) must ALSO be in the SAN or hostname verification fails
+        # the moment anything isn't on localhost relative to the broker.
+        sans = [x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]
+        sans += [_san_entry(h) for h in extra_hosts]
+        builder = builder.add_extension(x509.SubjectAlternativeName(sans), critical=False)
     cert = builder.sign(ca_key, hashes.SHA256())
     return key, cert
 
@@ -89,13 +100,14 @@ def _write(out: Path, name: str, key, cert) -> None:
     (out / f"{name}.pem").write_bytes(cert.public_bytes(serialization.Encoding.PEM))
 
 
-def provision(out_dir, nodes) -> Path:
+def provision(out_dir, nodes, broker_hosts=()) -> Path:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     ca_key, ca_cert = make_ca()
     _write(out, "ca", ca_key, ca_cert)
 
-    broker_key, broker_cert = make_cert("broker", ca_key, ca_cert, server=True)
+    broker_key, broker_cert = make_cert("broker", ca_key, ca_cert, server=True,
+                                        extra_hosts=broker_hosts)
     _write(out, "broker", broker_key, broker_cert)
     for identity in ["hub", *nodes]:
         key, cert = make_cert(identity, ca_key, ca_cert)
@@ -107,8 +119,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Provision the DOMORA mTLS PKI")
     parser.add_argument("--out", default="certs")
     parser.add_argument("--nodes", nargs="+", default=["fp1", "fp2", "env1"])
+    parser.add_argument("--broker-host", nargs="+", default=[],
+                        help="extra LAN IP(s)/hostname(s) the broker cert must "
+                             "validate for — real nodes connect over Wi-Fi, not "
+                             "localhost, e.g. --broker-host 192.168.1.5")
     args = parser.parse_args()
-    out = provision(args.out, args.nodes)
+    out = provision(args.out, args.nodes, broker_hosts=args.broker_host)
     print(f"PKI written to {out.resolve()} (identities: hub, {', '.join(args.nodes)})")
 
 
