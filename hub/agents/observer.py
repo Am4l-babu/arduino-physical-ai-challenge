@@ -14,7 +14,12 @@ RANGES = {
     "level_pct": (0.0, 100.0),
     "radar": (0, 1),
     "pir": (0, 1),
+    "door": (0, 1),
     "fixtures_open": (0, 20),
+    "temp_c": (-20.0, 60.0),
+    "humidity_pct": (0.0, 100.0),
+    "pressure_hpa": (800.0, 1100.0),
+    "lux": (0.0, 120000.0),
     "valve_state": None,  # enum, checked separately
     "pump_state": None,   # enum
 }

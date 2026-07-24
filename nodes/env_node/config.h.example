@@ -1,0 +1,44 @@
+// DOMORA ENV node — local configuration template.
+//
+// Copy this file to config.h (same directory) and fill in real values.
+// config.h is gitignored — it never enters version control, so Wi-Fi
+// credentials never leak into the repo.
+//
+//   cp config.h.example config.h
+
+#pragma once
+
+// --- identity (must match a CN provisioned by tools/gen_certs.py) ---
+#define NODE_ID   "env1"
+#define ROOM      "living"
+
+// --- Wi-Fi ---
+#define WIFI_SSID   "your-ssid"
+#define WIFI_PASS   "your-password"
+
+// --- MQTT broker (the hub, running Mosquitto with mTLS per tools/gen_certs.py) ---
+#define MQTT_HOST   "192.168.1.50"
+#define MQTT_PORT   8883
+
+// --- sensors actually stuffed on this board ---
+// One firmware, role-driven (nodes/README.md): flip these to match what's
+// physically wired. All five are on the §25.6 MVP order for env1/living
+// (docs/BOM_ORDER.md); set any to 0 if that part hasn't arrived yet — the
+// rest of the node still runs.
+#define HAS_BME280    1   // temp_c, humidity_pct, pressure_hpa
+#define HAS_VEML7700  1   // lux
+#define HAS_LD2410    1   // radar (still-human presence)
+#define HAS_PIR       1   // pir (motion)
+#define HAS_REED      1   // door (reed contact)
+
+// --- pins (ESP32-C6 DevKit; adjust to your wiring) ---
+#define PIN_I2C_SDA     6
+#define PIN_I2C_SCL     7
+#define PIN_LD2410_OUT  4    // LD2410's OT1 digital presence output
+#define PIN_PIR         5
+#define PIN_REED        8    // wired to GND via reed switch; INPUT_PULLUP
+
+// --- timing ---
+#define SENSE_PERIOD_MS   2000
+#define WIFI_TIMEOUT_MS   15000
+#define MQTT_RETRY_MS     5000

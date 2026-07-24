@@ -20,5 +20,10 @@ Firmware rules (mirror the hub's agent contracts):
 4. **Safe reboot states.** All outputs to fail-safe on watchdog reset
    (spec §16.2: fail-safe is chosen per asset, not a slogan).
 
-`env_node/env_node.ino` is the starting template; `node.yaml` (flashed as
-SPIFFS/NVS config) selects role, room, calibration, and topics.
+`env_node/env_node.ino` is written and compile-checked against the real
+ESP32-C6 toolchain (arduino-cli, esp32 core 3.3.9) — see
+[env_node/README.md](env_node/README.md) for setup — but not yet flashed to
+hardware. Role/room/sensor-mix currently come from a local `config.h`
+(gitignored — copy `config.h.example`), not yet a flashed SPIFFS/NVS
+`node.yaml`; that layer is deferred until the config pattern proves out on
+one real board.

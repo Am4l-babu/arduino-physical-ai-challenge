@@ -1,0 +1,34 @@
+// DOMORA ENV node — TLS identity template.
+//
+// Copy to certs.h (gitignored — private keys never enter version control)
+// and paste in this node's PKI files, produced by:
+//
+//   python -m tools.gen_certs --out certs --nodes fp1 fp2 env1 perc1
+//
+// CA_CERT      <- certs/ca.pem       (shared house CA, all nodes carry it)
+// CLIENT_CERT  <- certs/env1.pem     (this node's identity; CN doubles as
+//                                     the broker ACL username per gen_certs.py)
+// CLIENT_KEY   <- certs/env1.key     (this node's private key — never shared,
+//                                     never reused across nodes)
+//
+// Paste each PEM file's contents verbatim, including the BEGIN/END lines.
+
+#pragma once
+
+static const char CA_CERT[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+PASTE certs/ca.pem HERE
+-----END CERTIFICATE-----
+)EOF";
+
+static const char CLIENT_CERT[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+PASTE certs/env1.pem HERE
+-----END CERTIFICATE-----
+)EOF";
+
+static const char CLIENT_KEY[] PROGMEM = R"EOF(
+-----BEGIN RSA PRIVATE KEY-----
+PASTE certs/env1.key HERE
+-----END RSA PRIVATE KEY-----
+)EOF";

@@ -15,3 +15,15 @@ venv/
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Node firmware secrets — Wi-Fi credentials and mTLS private keys.
+# Never version these; copy the .example templates and fill in locally.
+nodes/**/config.h
+nodes/**/certs.h
+
+# Arduino build artifacts (arduino-cli compile output)
+*.hex
+*.bin
+*.elf
+*.map
+build/
