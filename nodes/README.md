@@ -3,11 +3,25 @@
 One firmware, two targets (ESP32-C6, ESP32-S3), role-driven by config —
 five MCU families was rejected in the spec (§7.2) as a maintenance tax.
 
-| Node type | Target | Role |
-|---|---|---|
-| ENV | ESP32-C6 | BME280, LD2410 radar, PIR, reeds, leak ADC, buzzer |
-| FLOW/POWER | ESP32-C6 | CT clamps / PZEM, flow, valve driver, SSR + **hardwired reflexes** |
-| PERCEPTION | ESP32-S3 | INMP441 mic → on-node TinyML → events only, never audio |
+| Node type | MQTT identity | Target | Role |
+|---|---|---|---|
+| ENV | `env1` | ESP32-C6 | BME280, LD2410 radar, PIR, reed, leak ADC, buzzer |
+| FLOW/POWER — panel | `fp1` | ESP32-C6 | 3x CT clamp + PZEM (whole-house NILM) |
+| TANK (valve + flow + level + pump) | `fp2` | ESP32-C6 | Main valve driver, line flow meter, tank level probe, pump CT, leak probes + **hardwired reflex** |
+| PERCEPTION | `perc1` | ESP32-S3 | INMP441 mic → on-node TinyML → events only, never audio |
+
+**One identity, one physical board, one mTLS cert** (`tools/gen_certs.py`'s CN
+doubles as the broker ACL username — a board can't hold two identities).
+`docs/BOM_ORDER.md`'s "FLOW/POWER — tank node" line item budgets exactly
+**one** ESP32-C6 for valve + line flow + tank level + pump CT + leak probes
+combined — so that's modeled as one node (`fp2`), not two, in `sim/` and the
+PKI defaults. **This is an assumption, not a confirmed physical layout** —
+the actual wiring/cabling plan (can one board's leads reach both the main-line
+valve and the roof tank in the demo rig?) hasn't been decided yet. If it turns
+out two boards are needed, `sim/virtual_house.py`'s valve+flow topics and
+`sim/virtual_pump.py`'s tank+pump topics need to move back onto separate
+node-ids — a small, mechanical change now that the assumption is written down
+in one place instead of scattered implicitly across files.
 
 Firmware rules (mirror the hub's agent contracts):
 

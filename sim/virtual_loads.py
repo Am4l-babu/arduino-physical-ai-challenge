@@ -36,4 +36,6 @@ class VirtualLoads:
             if any(a <= t < b for a, b in spans):
                 watts += load_w
         watts += self.rng.uniform(-1.5, 1.5)
-        self.bus.publish("domora/fp4/main_panel/power_w", {"value": round(watts, 1)})
+        # docs/BOM_ORDER.md's "FLOW/POWER — panel node" (3x CT + PZEM) is fp1,
+        # matching tools/gen_certs.py's default node identities.
+        self.bus.publish("domora/fp1/main_panel/power_w", {"value": round(watts, 1)})

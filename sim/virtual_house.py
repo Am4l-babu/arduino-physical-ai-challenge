@@ -46,9 +46,12 @@ class VirtualHouse:
             self.tank_level = max(0.0, self.tank_level - 0.05)
 
         noise = self.rng.uniform(-0.15, 0.15)
-        self.bus.publish("domora/fp1/tank.line/flow_lpm", {"value": round(max(0.0, flow), 2)})
+        # Valve, line flow, tank level, and pump CT are one physical board
+        # (docs/BOM_ORDER.md's "FLOW/POWER — tank node": one ESP32-C6 for all
+        # of it) — one mTLS identity, so everything publishes under fp2.
+        self.bus.publish("domora/fp2/tank.line/flow_lpm", {"value": round(max(0.0, flow), 2)})
         self.bus.publish("domora/fp2/water_tank/level_pct", {"value": round(self.tank_level + noise, 2)})
-        self.bus.publish("domora/fp1/main_valve/valve_state",
+        self.bus.publish("domora/fp2/main_valve/valve_state",
                          {"value": "open" if self.valve_open else "closed"})
         self.bus.publish("domora/env1/living/radar", {"value": 0})
         self.bus.publish("domora/env1/living/pir", {"value": 0})
