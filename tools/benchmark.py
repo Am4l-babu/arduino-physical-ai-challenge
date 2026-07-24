@@ -88,7 +88,7 @@ def run_benchmark(nodes: int, points: int, rate_hz: float, duration_s: int,
         "required_msgs_per_sec": int(required_rate),
         "headroom_x": round(achieved_rate / required_rate, 1),
         "avg_pipeline_latency_us": round(elapsed / sent * 1e6, 1),
-        "peak_python_heap_mb": round(peak_bytes / 1e6, 1),
+        "peak_python_heap_kb": round(peak_bytes / 1e3, 1),
         "journal_rows": journal["points_journal"],
         "journal_db_mb": round(journal["db_bytes"] / 1e6, 2),
     }
