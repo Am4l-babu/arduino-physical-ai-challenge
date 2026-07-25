@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bill of Materials · DOMORA Docs</title>
+<meta name="description" content="The real parts list for the competition build — what was ordered, why, and what got rejected along the way.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle navigation" title="Menu">&#9776;</button>
+  <nav class="topbar__nav"><a href="index.html">Home</a>
+<a href="spec.html">Engineering Specification</a>
+<a href="app-plan.html">App Build Plan</a>
+<a href="bom-order.html" class="active">Bill of Materials</a>
+<a href="agents.html">Agent Instructions</a></nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+<div class="layout">
+  <aside class="layout__sidebar sidebar">
+    <div class="search-box">
+      <input type="text" id="doc-search" data-base="" placeholder="Search docs&hellip; (press /)" autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <ul class="toc">
+<li class="lvl-2"><a href="#order-now-long-lead-time-risk">Order now — long lead time risk</a></li>
+<li class="lvl-2"><a href="#node-build-order-together-domestic-hobby-vendors-robuin-robocraze-electronicscomp-sunrom-quartz-components-amazonin">Node build — order together (domestic hobby vendors: Robu.in, Robocraze, ElectronicsComp, SunRom, Quartz Components, Amazon.in)</a></li>
+<li class="lvl-3"><a href="#flowpower-panel-node">FLOW/POWER — panel node</a></li>
+<li class="lvl-3"><a href="#flowpower-tank-node">FLOW/POWER — tank node</a></li>
+<li class="lvl-3"><a href="#env-living-room-node">ENV — living room node</a></li>
+<li class="lvl-3"><a href="#perception-kitchen-node">PERCEPTION — kitchen node</a></li>
+<li class="lvl-3"><a href="#shared-build-out">Shared build-out</a></li>
+<li class="lvl-2"><a href="#running-total">Running total</a></li>
+<li class="lvl-2"><a href="#ordering-notes">Ordering notes</a></li>
+</ul>
+  </aside>
+  <main class="doc" id="top">
+    <div class="doc-header">
+      <div class="doc-eyebrow"><span>🧾</span> Documentation</div>
+      <h1 class="doc-title">Bill of Materials</h1>
+      <p class="doc-desc">The real parts list for the competition build — what was ordered, why, and what got rejected along the way.</p>
+      <div class="doc-meta"><span>&#128214; 570 words</span><span>&#128196; docs/BOM_ORDER.md</span></div>
+    </div>
+    <p>Scope: <strong>not</strong> the full Tier M house (§6.1, ≈₹22k) — this is the ≈₹15k MVP
+subset from spec §25.6: UNO Q hub + exactly 4 physical nodes (ENV-living,
+FLOW/POWER-panel, FLOW/POWER-tank, PERCEPTION-kitchen). Anything not needed
+for the two verified closed loops (leak→valve→verify; pump dry-run→cut→verify)
+or the occupancy/comfort read-out is deliberately left off this list — it
+lives in Tier R/P (§6.2–6.3) for later.</p>
+<p>Prices are the spec's July-2026 street estimates (±30%, hobby market).
+<strong>Verify current price/stock before ordering — this file is a checklist,
+not a live quote.</strong></p>
+<h2 id="order-now-long-lead-time-risk">Order now — long lead time risk<a href="#order-now-long-lead-time-risk" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Est. ₹</th>
+<th>Source channel</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Arduino UNO Q (hub)</td>
+<td>1</td>
+<td>5,000</td>
+<td>Arduino Store / authorized IN distributor (check Robu.in, official Arduino resellers)</td>
+<td><strong>Order first.</strong> Competition-mandated board; import/distributor stock is the one item PLAN.md flags as the real week-1 risk.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="node-build-order-together-domestic-hobby-vendors-robuin-robocraze-electronicscomp-sunrom-quartz-components-amazonin">Node build — order together (domestic hobby vendors: Robu.in, Robocraze, ElectronicsComp, SunRom, Quartz Components, Amazon.in)<a href="#node-build-order-together-domestic-hobby-vendors-robuin-robocraze-electronicscomp-sunrom-quartz-components-amazonin" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<h3 id="flowpower-panel-node">FLOW/POWER — panel node<a href="#flowpower-panel-node" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Unit ₹</th>
+<th>Total ₹</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESP32-C6 DevKit</td>
+<td>1</td>
+<td>550</td>
+<td>550</td>
+</tr>
+<tr>
+<td>SCT-013-030 CT clamp</td>
+<td>3</td>
+<td>300</td>
+<td>900</td>
+</tr>
+<tr>
+<td>PZEM-004T v3 (calibration reference)</td>
+<td>1</td>
+<td>700</td>
+<td>700</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td><strong>2,150</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="flowpower-tank-node">FLOW/POWER — tank node<a href="#flowpower-tank-node" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Unit ₹</th>
+<th>Total ₹</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESP32-C6 DevKit</td>
+<td>1</td>
+<td>550</td>
+<td>550</td>
+</tr>
+<tr>
+<td>AJ-SR04M waterproof ultrasonic (level)</td>
+<td>1</td>
+<td>350</td>
+<td>350</td>
+</tr>
+<tr>
+<td>SCT-013-030 CT clamp (pump)</td>
+<td>1</td>
+<td>300</td>
+<td>300</td>
+</tr>
+<tr>
+<td>YF-S201 flow sensor</td>
+<td>1</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td>Motorized ball valve ½″ 12 V (CWX-15 or equiv.)</td>
+<td>1</td>
+<td>1,400</td>
+<td>1,400</td>
+</tr>
+<tr>
+<td>Water leak probe pairs</td>
+<td>2</td>
+<td>80</td>
+<td>160</td>
+</tr>
+<tr>
+<td>12 V/2 A PSU (valve)</td>
+<td>1</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td>5 V/3 A PSU (node)</td>
+<td>1</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td><strong>3,510</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="env-living-room-node">ENV — living room node<a href="#env-living-room-node" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Unit ₹</th>
+<th>Total ₹</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESP32-C6 DevKit</td>
+<td>1</td>
+<td>550</td>
+<td>550</td>
+</tr>
+<tr>
+<td>LD2410C mmWave radar</td>
+<td>1</td>
+<td>400</td>
+<td>400</td>
+</tr>
+<tr>
+<td>PIR HC-SR501</td>
+<td>1</td>
+<td>90</td>
+<td>90</td>
+</tr>
+<tr>
+<td>BME280 module</td>
+<td>1</td>
+<td>300</td>
+<td>300</td>
+</tr>
+<tr>
+<td>VEML7700 lux</td>
+<td>1</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td>Reed contact (door)</td>
+<td>1</td>
+<td>60</td>
+<td>60</td>
+</tr>
+<tr>
+<td>5 V/3 A PSU</td>
+<td>1</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td><strong>1,900</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="perception-kitchen-node">PERCEPTION — kitchen node<a href="#perception-kitchen-node" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Unit ₹</th>
+<th>Total ₹</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESP32-S3 DevKit N8R8</td>
+<td>1</td>
+<td>850</td>
+<td>850</td>
+</tr>
+<tr>
+<td>INMP441 I2S mic</td>
+<td>1</td>
+<td>280</td>
+<td>280</td>
+</tr>
+<tr>
+<td>5 V/3 A PSU</td>
+<td>1</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td></td>
+<td><strong>1,380</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="shared-build-out">Shared build-out<a href="#shared-build-out" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Est. ₹</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buzzers, LEDs, level shifters, wire, connectors, headers, breadboard/protoboard</td>
+<td>—</td>
+<td>800</td>
+<td>Scaled down from Tier M's whole-house ₹1,500</td>
+</tr>
+<tr>
+<td>Enclosures (ABS IP54 for tank/wet areas) + DIN mounting bits</td>
+<td>—</td>
+<td>500</td>
+<td>Tank node is the only wet-area box for the demo rig</td>
+</tr>
+<tr>
+<td>5 V/3 A PSU (hub)</td>
+<td>1</td>
+<td>250</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Subtotal</strong></td>
+<td></td>
+<td><strong>1,550</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="running-total">Running total<a href="#running-total" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>₹</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hub</td>
+<td>5,000</td>
+</tr>
+<tr>
+<td>FLOW/POWER panel</td>
+<td>2,150</td>
+</tr>
+<tr>
+<td>FLOW/POWER tank</td>
+<td>3,510</td>
+</tr>
+<tr>
+<td>ENV living</td>
+<td>1,900</td>
+</tr>
+<tr>
+<td>PERCEPTION kitchen</td>
+<td>1,380</td>
+</tr>
+<tr>
+<td>Shared build-out</td>
+<td>1,550</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>≈ 15,490</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Matches spec §25.6 (&quot;≈₹15k hardware&quot;). Do not add Tier R/P items
+(SCD40, extra valves, UPS, thermal cam, etc.) to this order — they're
+explicitly out of MVP scope; see §6.2–6.4 if a future phase needs them.</p>
+<h2 id="ordering-notes">Ordering notes<a href="#ordering-notes" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>UNO Q first, separately</strong> — it's the one part with real import/stock
+lead time; everything else is commodity hobby stock available same-week
+from domestic vendors.</li>
+<li>Buy 1 spare of anything solder-destructive to prototype with (reed
+contacts, leak probes) — cheap insurance, not scope creep.</li>
+<li>MQ-6/MQ-7 gas sensors are <strong>not</strong> in this list: §25.6's MVP has no gas
+loop (kitchen node here is PERCEPTION/audio only). If the gas-leaf-reflex
+demo gets pulled forward too, add MQ-6 + LPG solenoid from Tier R (§6.2)
+as a separate follow-up order — don't fold it into this one silently.</li>
+<li>Verify street prices before checkout; spec explicitly flags ±30% hobby-market
+swing since July 2026.</li>
+</ul>
+
+  </main>
+  <aside class="layout__minimap"><div class="minimap"><div class="minimap__label">On this page</div><ul><li><a href="#order-now-long-lead-time-risk">Order now — long lead time risk</a></li>
+<li><a href="#node-build-order-together-domestic-hobby-vendors-robuin-robocraze-electronicscomp-sunrom-quartz-components-amazonin">Node build — order together (domestic ho</a></li>
+<li><a href="#running-total">Running total</a></li>
+<li><a href="#ordering-notes">Ordering notes</a></li></ul></div></aside>
+</div>
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="vendor/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

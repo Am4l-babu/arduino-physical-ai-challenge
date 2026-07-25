@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOMORA Docs</title>
+<meta name="description" content="DOMORA — Digital Operating Model for Residential Awareness. Documentation home.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <nav class="topbar__nav">{{NAV}}</nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+
+<section class="hero">
+  <img src="assets/icon.png" alt="DOMORA app icon">
+  <h1>DOMORA Documentation</h1>
+  <p>Digital Operating Model for Residential Awareness &mdash; a house that observes, understands,
+     predicts, plans, acts, and verifies its own actions, running local-first on real hardware.
+     Four documents, one system: the spec, the app plan, the parts list, and the working rules.</p>
+  <div class="badges">
+    <span class="badge">Local-first</span>
+    <span class="badge">Closed-loop verification</span>
+    <span class="badge">Solo 8-week build</span>
+    <span class="badge">Real UNO Q hardware</span>
+  </div>
+</section>
+
+<div class="search-box" style="max-width:520px;margin:0 auto 48px;padding:0 24px;">
+  <input type="text" id="doc-search" data-base="" placeholder="Search all docs&hellip; (press /)" autocomplete="off" style="width:100%;">
+  <div class="search-results" id="search-results"></div>
+</div>
+
+<div class="card-grid">
+{{CARDS}}
+</div>
+
+<div class="landing-footer">
+  Generated from <code>docs/*.md</code> by <code>tools/build_docs_html.py</code> &mdash; the Markdown stays the source of truth.
+</div>
+
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="assets/app.js"></script>
+</body>
+</html>

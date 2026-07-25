@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Build Plan · DOMORA Docs</title>
+<meta name="description" content="How DOMORA Studio (web) and DOMORA Mobile (Flutter) got built — phased, each phase verified against the real running hub before the next started.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle navigation" title="Menu">&#9776;</button>
+  <nav class="topbar__nav"><a href="index.html">Home</a>
+<a href="spec.html">Engineering Specification</a>
+<a href="app-plan.html" class="active">App Build Plan</a>
+<a href="bom-order.html">Bill of Materials</a>
+<a href="agents.html">Agent Instructions</a></nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+<div class="layout">
+  <aside class="layout__sidebar sidebar">
+    <div class="search-box">
+      <input type="text" id="doc-search" data-base="" placeholder="Search docs&hellip; (press /)" autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <ul class="toc">
+<li class="lvl-2"><a href="#0-grounding-what-the-backend-already-gives-us">0 · Grounding — what the backend already gives us</a></li>
+<li class="lvl-3"><a href="#live-transport-get-ws-rfc-6455-already-in-hubservicesapipy">Live transport — GET /ws (RFC 6455, already in hub/services/api.py)</a></li>
+<li class="lvl-3"><a href="#real-twin-point-keys-what-the-house-is-right-now">Real twin point keys (what the house is, right now)</a></li>
+<li class="lvl-3"><a href="#cognitive-event-topics-the-mind-of-the-house-this-is-the-wow">Cognitive event topics (the &quot;mind&quot; of the house — this is the wow)</a></li>
+<li class="lvl-3"><a href="#scenarios-to-demo-against---scenario">Scenarios to demo against (--scenario)</a></li>
+<li class="lvl-2"><a href="#1-design-language-domora-unique-not-a-clone">1 · Design language — &quot;DOMORA&quot; (unique, not a clone)</a></li>
+<li class="lvl-2"><a href="#2-tech-decision-with-rationale-not-just-a-pick">2 · Tech decision (with rationale, not just a pick)</a></li>
+<li class="lvl-2"><a href="#3-folder-structure">3 · Folder structure</a></li>
+<li class="lvl-2"><a href="#4-screen-inventory-data-bindings-build-order">4 · Screen inventory &amp; data bindings (build order)</a></li>
+<li class="lvl-3"><a href="#phase-1-live-home-the-hero-do-this-first">Phase 1 — Live Home (the hero; do this first)</a></li>
+<li class="lvl-3"><a href="#phase-2-domora-ai-chat-grounded-on-the-twin">Phase 2 — DOMORA AI (chat, grounded on the twin)</a></li>
+<li class="lvl-3"><a href="#phase-3-dashboards-energy-water-security-shipped-environment-deferred">Phase 3 — Dashboards (Energy / Water / Security) — ✅ shipped, Environment deferred</a></li>
+<li class="lvl-3"><a href="#phase-4-detail-pages-room-appliance-sensor-shipped">Phase 4 — Detail pages (Room / Appliance / Sensor) — ✅ shipped</a></li>
+<li class="lvl-3"><a href="#phase-5-command-history-insights-settings-shipped">Phase 5 — Command, History, Insights, Settings — ✅ shipped</a></li>
+<li class="lvl-3"><a href="#backlog-spec-phase-2-only-if-time-do-not-start-without-an-ask">Backlog (spec Phase 2+, only if time — do not start without an ask)</a></li>
+<li class="lvl-2"><a href="#5-phased-delivery-definition-of-done-per-phase">5 · Phased delivery — definition of done per phase</a></li>
+<li class="lvl-2"><a href="#6-verification-guardrails">6 · Verification &amp; guardrails</a></li>
+<li class="lvl-2"><a href="#7-honest-limits-state-these-dont-paper-over-them">7 · Honest limits (state these; don&#x27;t paper over them)</a></li>
+<li class="lvl-2"><a href="#8-first-execution-slice-what-the-next-session-does">8 · First execution slice (what the next session does)</a></li>
+<li class="lvl-2"><a href="#9-domora-mobile-flutter-full-studio-parity-native-client">9 · DOMORA Mobile (Flutter) — full Studio parity, native client</a></li>
+</ul>
+  </aside>
+  <main class="doc" id="top">
+    <div class="doc-header">
+      <div class="doc-eyebrow"><span>📱</span> Documentation</div>
+      <h1 class="doc-title">App Build Plan</h1>
+      <p class="doc-desc">How DOMORA Studio (web) and DOMORA Mobile (Flutter) got built — phased, each phase verified against the real running hub before the next started.</p>
+      <div class="doc-meta"><span>&#128214; 3,402 words</span><span>&#128196; docs/APP_PLAN.md</span></div>
+    </div>
+    <blockquote>
+<p><strong>What this is.</strong> The premium, JARVIS-class front-end for DOMORA — the
+&quot;OS&quot; the user experiences. &quot;OS&quot; is the <em>product name</em>, not a real operating
+system: this is a web application (the <strong>DOMORA Studio / Web</strong> surface from
+the ecosystem list) that sits on top of the hub runtime already built in
+this repo and makes the house feel alive.</p>
+<p><strong>What this is not.</strong> Not a rewrite of the hub. Not the full multi-year
+vision. AR/VR, robotics, drones, offline local-LLM voice, multi-house /
+factory / hospital modes stay in the spec's Phase-3+/Tier-F backlog
+(<a href="DOMORA_SPEC.md">docs/DOMORA_SPEC.md</a> §6.4, §20). This plan builds the
+parts that are real and buildable now, in thin vertical slices, each one
+driven by data the hub actually emits.</p>
+</blockquote>
+<hr />
+<h2 id="0-grounding-what-the-backend-already-gives-us">0 · Grounding — what the backend already gives us<a href="#0-grounding-what-the-backend-already-gives-us" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>The app is a <strong>client</strong> of the hub. No new hub logic is required for the UI to
+be impressive; the intelligence already runs. The contract we build against:</p>
+<h3 id="live-transport-get-ws-rfc-6455-already-in-hubservicesapipy">Live transport — <code>GET /ws</code> (RFC 6455, already in <a href="../hub/services/api.py">hub/services/api.py</a>)<a href="#live-transport-get-ws-rfc-6455-already-in-hubservicesapipy" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Three message shapes arrive over the socket:</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th><code>type</code></th>
+<th>Fields</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>snapshot</code></td>
+<td><code>t</code>, <code>points{key → {value,t,source,confidence}}</code></td>
+<td>Full twin state on connect</td>
+</tr>
+<tr>
+<td><code>point</code></td>
+<td><code>key</code>, <code>value</code>, <code>t</code>, <code>source</code>, <code>confidence</code></td>
+<td>One twin point changed</td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td><code>topic</code>, <code>payload</code>, <code>t</code></td>
+<td>A bus event (cognition + raw sensor)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="real-twin-point-keys-what-the-house-is-right-now">Real twin point keys (what the house <em>is</em>, right now)<a href="#real-twin-point-keys-what-the-house-is-right-now" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="code-block"><div class="code-block__bar"><span class="code-block__lang">text</span><button class="code-block__copy" type="button">Copy</button></div><pre><code class="language-text">house.occupied            bool      whole-house occupancy fusion
+house.fixtures_open       int/bool  taps/valves open
+living.pir, living.radar  bool      raw room presence
+tank.line.flow_lpm        float     main line flow (L/min)
+water_tank.level_pct       float     tank fill %
+main_valve.valve_state    &quot;open&quot;|&quot;closed&quot;
+pump.pump_state           &quot;on&quot;|&quot;off&quot;
+pump.current_a            float     pump CT-clamp current
+main_panel.power_w        float     whole-house power (NILM source)
+virtual.water.leak_suspected    bool  + virtual.water.leak_evidence
+virtual.pump.dryrun_suspected   bool  + virtual.pump.dryrun_evidence
+virtual.tank.slope, virtual.tank.empty_eta_ticks
+health.main_valve, health.pump  &quot;suspect&quot; when independently doubted
+</code></pre></div>
+<p>NILM (energy scenario) adds a per-appliance ledger (fridge / kettle / lamp)
+recovered from <code>main_panel.power_w</code> alone.</p>
+<h3 id="cognitive-event-topics-the-mind-of-the-house-this-is-the-wow">Cognitive event topics (the &quot;mind&quot; of the house — this is the wow)<a href="#cognitive-event-topics-the-mind-of-the-house-this-is-the-wow" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="code-block"><div class="code-block__bar"><span class="code-block__lang">text</span><button class="code-block__copy" type="button">Copy</button></div><pre><code class="language-text">domora/plan/action        payload.action = {id,cause,evidence,command_topic,expectation,status}
+domora/act/dispatched     payload.action (command sent)
+domora/verify/confirmed   payload.action_id (independent sensor agreed)
+domora/alert/critical     payload.action_id, payload.reason (escalation)
+domora/alert/veto         safety.py refused an action
+domora/cmd/pump/off       raw command
+domora/&lt;node&gt;/&lt;sys&gt;/&lt;pt&gt;  raw sensor traffic
+</code></pre></div>
+<h3 id="scenarios-to-demo-against---scenario">Scenarios to demo against (<code>--scenario</code>)<a href="#scenarios-to-demo-against---scenario" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<p><code>leak</code> (flagship close-the-valve loop) · <code>stuck</code> (valve fails → escalation) ·
+<code>energy</code> (NILM disaggregation) · <code>dryrun</code> / <code>dryrun_stuck</code> (pump protection).</p>
+<p><strong>Design principle inherited from the repo: <em>data is the graphics.</em></strong> Every
+pixel that moves is bound to a real point or event above. No fake dials.</p>
+<hr />
+<h2 id="1-design-language-domora-unique-not-a-clone">1 · Design language — &quot;DOMORA&quot; (unique, not a clone)<a href="#1-design-language-domora-unique-not-a-clone" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>A single, ownable visual system. Dark-first, glass, soft glow, depth, calm.
+Not a copy of VisionOS / Nothing / Tesla — it borrows the <em>principles</em>
+(depth, restraint, living motion) and commits to its own tokens.</p>
+<p><strong>Core idea: the house is an organism; the UI is its nervous system.</strong>
+State is communicated primarily through <strong>color-as-health</strong> and <strong>ambient
+motion</strong>, exactly the vocabulary the brief asks for:</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Token</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🟢 Normal</td>
+<td><code>--st-ok</code></td>
+<td>healthy / nominal</td>
+</tr>
+<tr>
+<td>🟡 Warning</td>
+<td><code>--st-warn</code></td>
+<td>attention, not urgent</td>
+</tr>
+<tr>
+<td>🔴 Critical</td>
+<td><code>--st-crit</code></td>
+<td>leak / escalation / danger</td>
+</tr>
+<tr>
+<td>🔵 Learning</td>
+<td><code>--st-learn</code></td>
+<td>model still calibrating</td>
+</tr>
+<tr>
+<td>🟣 Prediction</td>
+<td><code>--st-pred</code></td>
+<td>a forecast / simulated future</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Design tokens (CSS custom properties, single source of truth in <code>tokens.css</code>):</strong></p>
+<ul>
+<li><strong>Color:</strong> near-black layered backgrounds (<code>--bg-0</code>…<code>--bg-2</code>), glass panels
+(<code>--glass</code> = translucent + <code>backdrop-filter: blur()</code> + hairline border),
+one cool accent (<code>--accent</code>, electric cyan-blue), the five state hues above,
+each with a matched low-alpha glow (<code>--*-glow</code>).</li>
+<li><strong>Type:</strong> one geometric/grotesk UI face (system stack fallback, no CDN),
+one mono for data. Scale: 11 / 12 / 13 / 15 / 18 / 24 / 40. Tight tracking
+on display sizes.</li>
+<li><strong>Space:</strong> 4px base grid (4/8/12/16/24/32). Generous. Nothing crowded.</li>
+<li><strong>Radius / shadow:</strong> <code>--r-1: 10px</code>, <code>--r-2: 16px</code>, <code>--r-3: 24px</code>; soft,
+large, low-opacity shadows + inner top-highlight for the glass edge.</li>
+<li><strong>Motion:</strong> one shared easing (<code>--ease: cubic-bezier(.22,.61,.36,1)</code>),
+durations 120/200/320/500ms. A slow ambient &quot;breathing&quot; keyframe for the
+living-organism feel. <strong>Respect <code>prefers-reduced-motion</code>.</strong></li>
+<li><strong>Depth:</strong> consistent elevation ladder (bg → panel → glass card → modal →
+HUD overlay), each with more blur + brighter edge.</li>
+</ul>
+<p>Light mode exists (tokens flip) but <strong>dark is the designed default</strong>, per brief.</p>
+<hr />
+<h2 id="2-tech-decision-with-rationale-not-just-a-pick">2 · Tech decision (with rationale, not just a pick)<a href="#2-tech-decision-with-rationale-not-just-a-pick" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p><strong>Chosen: a self-contained web app — no build step, no CDN, no framework
+runtime — served straight from the existing hub HTTP server.</strong></p>
+<p>Why this and not React/Vite/Tailwind:</p>
+<ul>
+<li>The hub must run on a <strong>2 GB UNO Q</strong> and the demo promise is <em>&quot;judge's phone
+needs no install, served from the hub, works at a venue with no internet&quot;</em>
+— already proven for the current dashboard. A CDN-less, build-less app keeps
+that property intact. A React/Three bundle <em>can</em> be served statically too,
+but it adds a node toolchain, a build artifact to keep in sync, and CDN/font
+temptations that break at the venue.</li>
+<li>Repo rule: <strong>stdlib in <code>hub/</code> core; heavier deps behind <code>hub/services/</code>.</strong>
+The front-end stays dependency-free; anything heavy (a real LLM for AI chat)
+goes behind a <code>hub/services/</code> adapter, off by default.</li>
+<li>fable-mode: <em>delete complexity, stdlib before framework, thin slices.</em></li>
+</ul>
+<p>How we stay maintainable without a framework:</p>
+<ul>
+<li><strong>ES modules</strong>, one file per screen/component, native <code>import</code>. No bundler.</li>
+<li>A tiny (~60-line) shared render/reactivity helper (<code>core/store.js</code>,
+<code>core/dom.js</code>) — a signal-ish store + a <code>h()</code> tag helper. Not React; just
+enough to avoid string-soup.</li>
+<li><strong>Hash router</strong> (<code>#/home</code>, <code>#/ai</code>, <code>#/energy</code>, …) — instant, offline, no
+server routing needed.</li>
+<li><strong>Web standards for polish:</strong> CSS <code>backdrop-filter</code>, CSS grid, View
+Transitions API (progressive), Web Animations, inline SVG, Canvas/WebGL only
+where a 2D/SVG version can't carry the idea.</li>
+<li><strong>3D twin:</strong> ship the <strong>isometric SVG/CSS &quot;2.5D&quot; living house first</strong>
+(immediate, dependency-free, on-brand). A real Three.js twin is a later,
+<em>locally-vendored</em> enhancement — backlog, not blocker. (Matches the
+deliberate SVG-over-Three.js call already made in PROGRESS.md.)</li>
+</ul>
+<p><strong>One small, tested hub change</strong> is required: the current handler only serves
+<code>/</code>, <code>/index.html</code>, <code>/ws</code>, <code>/health</code>, <code>/playback.json</code>. We extend it to serve a
+static <strong><code>studio/</code></strong> directory (correct content-types + path-traversal guard).
+This lands with a test (simulation-first applies to hub code).</p>
+<hr />
+<h2 id="3-folder-structure">3 · Folder structure<a href="#3-folder-structure" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="code-block"><div class="code-block__bar"><span class="code-block__lang">text</span><button class="code-block__copy" type="button">Copy</button></div><pre><code class="language-text">studio/                         # the app (served statically by the hub)
+  index.html                    # shell: &lt;domora-app&gt; mount, imports app.js
+  app.js                        # boot: router + live socket + shell chrome
+  tokens.css                    # design tokens (single source of truth)
+  base.css                      # reset, glass primitives, motion, layout
+  core/
+    store.js                    # reactive store (signals) + twin state model
+    socket.js                   # /ws client: reconnect, snapshot/point/event
+    twin.js                     # derived house model (rooms, health, systems)
+    dom.js                      # h() tag helper + mount/patch
+    router.js                   # hash router
+    format.js                   # units, time, number formatting
+  ui/                           # reusable components
+    glass-card.js  stat-tile.js  meter.js  sparkline.js  chip.js
+    health-dot.js  timeline.js  toast.js  command-bar.js
+  screens/
+    home.js                     # Phase 1 — the Live Home (hero)
+    ai.js                       # Phase 2 — DOMORA AI chat
+    energy.js  water.js  security.js  environment.js   # Phase 3
+    room.js  appliance.js  sensor.js                   # Phase 4
+    history.js  insights.js  settings.js               # Phase 5
+  assets/                       # inline-friendly icons (SVG), no binaries/CDN
+hub/services/
+  api.py                        # + static studio/ serving (tested)
+  ai_query.py                   # DOMORA AI grounded query engine (stdlib, tested)
+  llm_adapter.py                # OPTIONAL cloud/local LLM behind an interface (off by default)
+tests/
+  test_studio_serving.py        # static serving + traversal guard
+  test_ai_query.py              # grounded answers over a known twin state
+</code></pre></div>
+<p>Nothing here touches <code>hub/core</code>, <code>hub/agents/safety.py</code>, or the twin logic.</p>
+<hr />
+<h2 id="4-screen-inventory-data-bindings-build-order">4 · Screen inventory &amp; data bindings (build order)<a href="#4-screen-inventory-data-bindings-build-order" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Each screen names the <strong>real points/topics</strong> it binds to, so it is impossible
+to build a fake one. Definition-of-done per phase is in §5.</p>
+<h3 id="phase-1-live-home-the-hero-do-this-first">Phase 1 — <strong>Live Home</strong> (the hero; do this first)<a href="#phase-1-live-home-the-hero-do-this-first" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Living house view</strong>: isometric SVG house, each zone (Living, Kitchen,
+Utility/Water, Panel) tinted by a computed <strong>health color</strong> derived from its
+bound points (leak/dryrun/valve-suspect → red; slope warnings → yellow;
+learning → blue). Ambient &quot;breathing&quot; glow when nominal.
+<ul>
+<li>Bindings: <code>house.occupied</code>, <code>living.pir/radar</code>, <code>tank.line.flow_lpm</code>,
+<code>water_tank.level_pct</code>, <code>main_valve.valve_state</code>, <code>pump.*</code>,
+<code>virtual.water.leak_suspected</code>, <code>virtual.pump.dryrun_suspected</code>,
+<code>health.main_valve</code>, <code>health.pump</code>, <code>main_panel.power_w</code>.</li>
+</ul>
+</li>
+<li><strong>Live vitals rail</strong>: power now, water flow, tank %, occupancy, system
+health — glass stat tiles with sparklines fed from the point stream.</li>
+<li><strong>&quot;The house is thinking&quot; strip</strong>: the latest <code>domora/plan → act → verify</code>
+chain as a live, animated one-liner (reuses cognition topics).</li>
+<li>Tapping a zone → Room page (Phase 4).</li>
+</ul>
+<h3 id="phase-2-domora-ai-chat-grounded-on-the-twin">Phase 2 — <strong>DOMORA AI</strong> (chat, grounded on the twin)<a href="#phase-2-domora-ai-chat-grounded-on-the-twin" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Conversational surface that answers <em>from the digital twin</em>, not a generic bot.</p>
+<ul>
+<li>Backend <code>hub/services/ai_query.py</code>: intent match → query twin/NILM/journal →
+templated NL answer + a small &quot;evidence&quot; payload the UI renders as a card.
+Deterministic, offline, <strong>tested</strong>. Handles the brief's example prompts:
+<em>&quot;Why is today's power high?&quot;</em> (→ NILM ledger deltas), <em>&quot;How much water was
+used yesterday?&quot;</em> (→ flow integral from journal), <em>&quot;Which appliance is
+becoming unhealthy?&quot;</em> (→ <code>health.*</code> + vibration/RUL when present),
+<em>&quot;What changed while I was away?&quot;</em> (→ event journal filtered by occupancy),
+<em>&quot;Run a simulation&quot; / &quot;what if the pump stays on?&quot;</em> (→ hand to sim scenario).</li>
+<li><code>hub/services/llm_adapter.py</code>: optional. If an API key + network exist, the
+same grounded context is handed to a real LLM for free-form phrasing;
+<strong>off by default</strong>, never required, never in <code>hub/core</code>. (See
+[.claude/skills/claude-api] if wiring a Claude backend.)</li>
+<li>UI: chat transcript with streamed tokens, evidence cards, quick-prompt chips,
+and a mic affordance stubbed for future voice (voice itself = backlog).</li>
+</ul>
+<h3 id="phase-3-dashboards-energy-water-security-shipped-environment-deferred">Phase 3 — <strong>Dashboards</strong> (Energy / Water / Security) — ✅ shipped, Environment deferred<a href="#phase-3-dashboards-energy-water-security-shipped-environment-deferred" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Energy</strong>: live power, NILM appliance breakdown (real ledger via GET
+/nilm), a this-session trend chart (journal-backed under <code>--playback</code>,
+live buffer otherwise). Built to the <code>dataviz</code> skill's method.</li>
+<li><strong>Water</strong>: flow + tank level trend charts, valve/pump/leak/dry-run status,
+and the real incident list (cause→evidence→command→verify). The full
+scrub-back replay isn't duplicated here — the whole app already gets it
+for free when the server runs <code>--playback</code> (§0), so a second bespoke
+scrubber on this one page would be redundant, not additive.</li>
+<li><strong>Security</strong>: occupancy + the real alert feed. Doors/windows/motion-beyond-
+radar/glass-break/smoke/gas have <strong>no simulator or hardware publishing
+them yet</strong> — the screen says so explicitly (a &quot;not yet connected&quot; list)
+rather than showing fabricated toggles.</li>
+<li><strong>Environment</strong> (temp/humidity/pressure/lux/CO₂ via <code>env1/*</code>): <strong>deferred,
+not built.</strong> No scenario in <code>sim/</code> publishes these — the ENV node firmware
+exists and compiles but nothing simulates its readings, so this screen
+would have to be entirely fabricated or entirely empty. Revisit once
+<code>sim/</code> gains an environment simulator; until then it's intentionally
+absent from the nav rather than shipped as a placeholder.</li>
+</ul>
+<h3 id="phase-4-detail-pages-room-appliance-sensor-shipped">Phase 4 — <strong>Detail pages</strong> (Room / Appliance / Sensor) — ✅ shipped<a href="#phase-4-detail-pages-room-appliance-sensor-shipped" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Room</strong>: the 3 real zones (living/utility/panel) — state, real points,
+health, and (utility only — the only zone anything ever acts on) the real
+action list. No 3D view, predictions, automation, or maintenance
+suggestions: none of that is computed anywhere in this codebase.</li>
+<li><strong>Appliance</strong>: reads GET /nilm. Health score, RUL, failure-probability, and
+sound/vibration analysis are explicitly labelled <strong>not computed</strong> rather
+than estimated — this system has no per-appliance current/sound/vibration
+sensing to estimate them from, only aggregate-power disaggregation.</li>
+<li><strong>Sensor</strong>: fully generic — works for <em>any</em> twin point key, since every
+point shares one shape (value/t/source/confidence). Live value, source,
+confidence, age (same staleness convention as hub/twin/state.py), trend,
+raw-values table. No calibration UI — nothing in the backend exposes
+calibration to control.</li>
+</ul>
+<h3 id="phase-5-command-history-insights-settings-shipped">Phase 5 — <strong>Command, History, Insights, Settings</strong> — ✅ shipped<a href="#phase-5-command-history-insights-settings-shipped" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Command bar</strong> (<code>⌘K</code> / Ctrl+K): searches screens, rooms, and live twin
+points, then navigates. <strong>Search-and-navigate only — does not issue
+commands.</strong> This system's only actuation path is the planner dispatching
+through <code>hub/agents/safety.py</code>'s capability table; a manual &quot;type a
+command, it runs&quot; surface is a new safety-relevant capability, and
+CLAUDE.md requires an explicit invariant review for capability-table
+changes. That's the project owner's call, not something to add via a
+search box as a side effect of a UI pass.</li>
+<li><strong>History</strong>: scrubs a real recorded journal (GET <code>/playback.json</code>),
+reconstructing twin + action state <em>at the scrubbed tick</em> — genuinely
+time-aware, not a full dump with a slider on top. Kept as its own local
+state, not the live store, so scrubbing the past can never corrupt what
+other tabs show as &quot;now.&quot; Honest fallback when the server wasn't started
+with <code>--journal</code>/<code>--playback</code>. Search/filter/bookmarks not built — the
+scrubber plus the reconstructed points/action tables cover the
+useful case; add those only if a real workflow needs them.</li>
+<li><strong>AI Insights</strong>: prioritized cards (critical/warning/info) derived from
+real signals already shown elsewhere — leak, dry-run, health-suspect,
+low tank, escalated/retrying actions, top NILM consumer. A different
+presentation of real state, not a new inference engine.</li>
+<li><strong>Settings</strong>: House/Nodes read from the real house knowledge graph (new
+GET <code>/graph</code>, <code>hub/config/house.json</code>). AI lists the real supported
+intents. Users is honest: no accounts/roles/auth exist in this build.</li>
+</ul>
+<h3 id="backlog-spec-phase-2-only-if-time-do-not-start-without-an-ask">Backlog (spec Phase 2+, only if time — do <strong>not</strong> start without an ask)<a href="#backlog-spec-phase-2-only-if-time-do-not-start-without-an-ask" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Device-add wizard · visual automation builder · node map drag-drop · real
+Three.js twin · offline voice/wake-word · user roles &amp; login providers ·
+installer/developer modes · multi-house.</p>
+<hr />
+<h2 id="5-phased-delivery-definition-of-done-per-phase">5 · Phased delivery — definition of done per phase<a href="#5-phased-delivery-definition-of-done-per-phase" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Simulation-first: run the app against a live scenario and <strong>watch it behave</strong>,
+not just compile. <code>python -m pytest tests/ -q</code> must stay green for any hub
+change.</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Deliverable</th>
+<th>Done when (observable)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0 · Foundation</strong></td>
+<td>tokens.css, base.css, app shell, router, live socket, store, static <code>studio/</code> serving + test</td>
+<td><code>python -m hub.services.api --scenario leak</code> serves <code>studio/</code> at <code>/</code>; the shell connects, shows a live status dot, and logs real snapshot/point/event frames from the running scenario. <code>test_studio_serving.py</code> green.</td>
+</tr>
+<tr>
+<td><strong>1 · Live Home</strong></td>
+<td>The hero screen, fully bound</td>
+<td>Running <code>--scenario stuck</code>, the Utility/water zone turns <strong>red</strong> as the leak is suspected and the valve badge shows <em>suspect</em>; occupancy glow tracks <code>house.occupied</code>; the thinking-strip shows the real <code>plan→act→verify</code> chain. Screen-recorded as proof.</td>
+</tr>
+<tr>
+<td><strong>2 · DOMORA AI</strong></td>
+<td><code>ai_query.py</code> + chat screen</td>
+<td>With <code>--scenario energy</code>, asking <em>&quot;why is power high?&quot;</em> returns the real kettle/fridge/lamp breakdown from the NILM ledger with an evidence card. <code>test_ai_query.py</code> green (deterministic answers over a fixed twin).</td>
+</tr>
+<tr>
+<td><strong>3 · Dashboards</strong></td>
+<td>Energy/Water/Security/Environment</td>
+<td>Each renders live points + at least one journal-backed historical chart, dark+light, mobile+desktop, no horizontal body scroll.</td>
+</tr>
+<tr>
+<td><strong>4 · Detail pages</strong></td>
+<td>Room / Appliance / Sensor</td>
+<td>Drill-down from Home and dashboards works; each page bound to real points; honest RUL labelling.</td>
+</tr>
+<tr>
+<td><strong>5 · Command/History/Insights/Settings</strong></td>
+<td>⌘K, history scrub, insights, settings</td>
+<td>Command bar searches real entities and can replay an incident; insights cards derive from real state.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Ship each phase end-to-end before widening. An MVP that runs beats an
+architecture that doesn't.</p>
+<hr />
+<h2 id="6-verification-guardrails">6 · Verification &amp; guardrails<a href="#6-verification-guardrails" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Every UI claim is verified by running a scenario and observing</strong> (record
+the screen). &quot;It compiles / looks right&quot; is not done.</li>
+<li><strong>Test the failure path</strong>: the stuck-valve escalation and dry-run-stuck
+paths must render correctly, not just the happy leak-close.</li>
+<li><strong>Hub changes are tested</strong> (<code>tests/</code>), stdlib-only, no <code>hub/core</code> deps added.</li>
+<li><strong>Safety unchanged</strong>: <code>hub/agents/safety.py</code> stays ML-free; the UI issues
+only commands the capability table already allows. No new autonomous action.</li>
+<li><strong>Life-safety wording</strong> (&quot;supplements, never replaces certified detectors&quot;)
+stays visible, per repo rule and brief.</li>
+<li><strong>Accessibility</strong>: honor <code>prefers-reduced-motion</code> and <code>prefers-color-scheme</code>;
+keyboard-navigable; sufficient contrast on glass.</li>
+<li><strong>Responsive</strong>: desktop / tablet / mobile / touch, landscape + portrait;
+wide content scrolls inside its own container, never the body.</li>
+<li><strong>No AI attribution in commits; no pushing without an explicit ask.</strong></li>
+</ul>
+<hr />
+<h2 id="7-honest-limits-state-these-dont-paper-over-them">7 · Honest limits (state these; don't paper over them)<a href="#7-honest-limits-state-these-dont-paper-over-them" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>&quot;3D digital twin&quot; ships first as <strong>2.5D SVG/CSS</strong>, not WebGL. Real 3D is a
+named backlog enhancement.</li>
+<li>&quot;Voice mode / offline speech / wake word&quot; is <strong>not</strong> in this plan (backlog).
+A mic affordance may appear as a stub.</li>
+<li>&quot;DOMORA AI&quot; is <strong>grounded query first</strong> (deterministic, offline). A real LLM
+is an optional, off-by-default adapter — not the default experience, and it
+needs network + a key it won't have at the venue.</li>
+<li>Predictions are the spec's honest <strong>anomaly/trend</strong> estimates, labelled as
+such — never presented as certainty.</li>
+<li>Login/roles, device wizard, automation builder, node map = backlog; the app
+runs single-user against the live hub until those land.</li>
+</ul>
+<hr />
+<h2 id="8-first-execution-slice-what-the-next-session-does">8 · First execution slice (what the next session does)<a href="#8-first-execution-slice-what-the-next-session-does" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Phase 0</strong>, in order: <code>tokens.css</code> → <code>base.css</code> → <code>core/{store,socket, dom,router}.js</code> → <code>studio/index.html</code> + <code>app.js</code> shell → extend
+<code>hub/services/api.py</code> to serve <code>studio/</code> (+ <code>test_studio_serving.py</code>).
+<strong>DoD:</strong> the shell connects to a live <code>--scenario leak</code> run and shows real
+frames. Run it, watch it, record it.</li>
+<li><strong>Phase 1 — Live Home</strong>, then stop and show it before widening.</li>
+</ol>
+<blockquote>
+<p>Track this as the <strong>DOMORA Studio</strong> front-end line. It extends (does not
+replace) the week-5 dashboard already in <code>dashboard/</code>. PLAN.md's competition
+scope contract is untouched; this is the owner-prioritized product surface.</p>
+</blockquote>
+<hr />
+<h2 id="9-domora-mobile-flutter-full-studio-parity-native-client">9 · DOMORA Mobile (Flutter) — full Studio parity, native client<a href="#9-domora-mobile-flutter-full-studio-parity-native-client" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>A native Android/iOS app (<code>mobile/</code>, standard <code>flutter create</code> layout) that
+is a <strong>client of the exact same hub</strong> Studio already talks to — <code>/ws</code>, <code>/ai</code>,
+<code>/nilm</code>, <code>/graph</code>, <code>/history</code>, <code>/playback.json</code>. No new backend surface for
+parity; the whole data contract in §0 already applies unchanged. Scope:
+full parity with the web Studio (owner's explicit choice over a thinner
+companion), built in the same phase order, each phase verified against the
+real running hub before the next starts.</p>
+<p><strong>Key difference from the web app, and why it matters:</strong> Studio is <em>served
+by</em> the hub, so relative URLs just work. A Flutter app is a separate OS
+process (often a separate device) — it needs to be told where the hub is.
+A <strong>Connect screen</strong> (host:port, defaults to <code>10.0.2.2:8080</code> on the Android
+emulator — the emulator's alias for the host machine's <code>localhost</code> — editable
+for a real device on the LAN) persists the URL via <code>shared_preferences</code> and
+gates the rest of the app.</p>
+<p><strong>Packages</strong> (kept to the official/minimal set — same &quot;delete complexity&quot;
+instinct as Studio's zero-dependency web build, just not zero-dependency-able
+in Flutter): <code>web_socket_channel</code> (the <code>/ws</code> client), <code>http</code> (GET/POST to
+everything else), <code>shared_preferences</code> (persist the hub URL). No charting
+library — custom <code>CustomPainter</code> line/bar charts reusing the <strong>exact
+validated hex values</strong> already in <code>studio/tokens.css</code> (categorical
+<code>#3987e5/#d95926/#199e70</code> dark, <code>#2a78d6/#eb6834/#1baf7a</code> light; state
+<code>#3ee08a/#f5b955/#ff5d6c/#6c8dff/#c084fc</code>) as Dart constants — the palette
+was already run through the <code>dataviz</code> skill's validator once; it doesn't
+get re-derived, just ported. No state-management package — <code>ChangeNotifier</code></p>
+<ul>
+<li><code>ListenableBuilder</code> (Flutter SDK) mirrors <code>studio/core/store.js</code>'s shape
+(points map, actions map, feed, connection status) directly.</li>
+</ul>
+<p><strong>Structure:</strong></p>
+<div class="code-block"><div class="code-block__bar"><span class="code-block__lang">text</span><button class="code-block__copy" type="button">Copy</button></div><pre><code class="language-text">mobile/
+  lib/
+    main.dart
+    theme/tokens.dart          # ported color/spacing/radius constants
+    core/
+      store.dart                # ChangeNotifier mirroring core/store.js
+      hub_client.dart            # WebSocket + http client, connect-screen aware
+      twin.dart                  # derive*() pure functions, ported from core/twin.js
+      insights.dart              # ported from core/insights.js
+    widgets/
+      glass_card.dart  stat_tile.dart  health_dot.dart  chip.dart
+      line_chart.dart  bar_chart.dart  # CustomPainter, same mark specs as ui/*.js
+    screens/
+      connect.dart  home.dart  ai.dart  energy.dart  water.dart  security.dart
+      room.dart  appliance.dart  sensor.dart
+      history.dart  insights.dart  settings.dart
+  test/
+    # fed the SAME captured real /ws frames already saved during the Studio
+    # build (stuck_frames.json / energy_frames.json) — real data, not new
+    # hand-written fixtures, same discipline as Studio&#x27;s headless verification
+</code></pre></div>
+<p><strong>Navigation:</strong> <code>BottomNavigationBar</code> for Home/AI/Energy/Water/Security
+(Studio's top tabs); an app-bar menu for History/Insights/Settings;
+<code>Navigator.push</code> for Room/Appliance/Sensor detail pages. A search icon opens
+a search screen (mobile's equivalent of ⌘K) — <strong>search-and-navigate only,
+same as Studio's command bar, for the same reason:</strong> this system's only
+actuation path is the planner through <code>hub/agents/safety.py</code>'s capability
+table, and CLAUDE.md requires an explicit invariant review before that
+table changes. A mobile search box doesn't get to add actuation as a side
+effect either.</p>
+<p><strong>Phase order</strong> (same reasoning as §5 — thin vertical slices, verify each
+against the live hub before widening):</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Deliverable</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>Scaffold, theme, hub_client (WS+HTTP), store, Connect screen, Home</td>
+<td>Running app connects to a live <code>--scenario stuck</code> hub and the Home screen shows the real leak/valve-suspect state, verified by actually running the app (not just <code>flutter analyze</code>)</td>
+</tr>
+<tr>
+<td>B</td>
+<td>AI chat</td>
+<td>Real grounded answers from POST /ai render in a chat UI</td>
+</tr>
+<tr>
+<td>C</td>
+<td>Energy/Water/Security</td>
+<td>Real charts (CustomPainter, ported mark specs) + real alerts</td>
+</tr>
+<tr>
+<td>D</td>
+<td>Room/Appliance/Sensor</td>
+<td>Same click-through drill-down as Studio</td>
+</tr>
+<tr>
+<td>E</td>
+<td>History/Insights/Settings + search</td>
+<td>Playback scrub, real insight cards, real /graph data</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Honest limits carried over unchanged from §7:</strong> no manual actuation, no
+LLM by default, no 3D twin, no voice, no login/roles. iOS is unbuildable
+without a Mac/Xcode from this environment — Android + web (<code>flutter run -d chrome</code>, useful for fast iteration) are the targets actually exercised here.</p>
+
+  </main>
+  <aside class="layout__minimap"><div class="minimap"><div class="minimap__label">On this page</div><ul><li><a href="#0-grounding-what-the-backend-already-gives-us">0 · Grounding — what the backend already</a></li>
+<li><a href="#1-design-language-domora-unique-not-a-clone">1 · Design language — &quot;DOMORA&quot; (unique, </a></li>
+<li><a href="#2-tech-decision-with-rationale-not-just-a-pick">2 · Tech decision (with rationale, not j</a></li>
+<li><a href="#3-folder-structure">3 · Folder structure</a></li>
+<li><a href="#4-screen-inventory-data-bindings-build-order">4 · Screen inventory &amp; data bindings (bu</a></li>
+<li><a href="#5-phased-delivery-definition-of-done-per-phase">5 · Phased delivery — definition of done</a></li>
+<li><a href="#6-verification-guardrails">6 · Verification &amp; guardrails</a></li>
+<li><a href="#7-honest-limits-state-these-dont-paper-over-them">7 · Honest limits (state these; don&#x27;t pa</a></li>
+<li><a href="#8-first-execution-slice-what-the-next-session-does">8 · First execution slice (what the next</a></li>
+<li><a href="#9-domora-mobile-flutter-full-studio-parity-native-client">9 · DOMORA Mobile (Flutter) — full Studi</a></li></ul></div></aside>
+</div>
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="vendor/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

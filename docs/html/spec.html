@@ -1,0 +1,1793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engineering Specification · DOMORA Docs</title>
+<meta name="description" content="The full system design: architecture, hardware tiers, safety framework, cybersecurity, and the adversarial self-review.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle navigation" title="Menu">&#9776;</button>
+  <nav class="topbar__nav"><a href="index.html">Home</a>
+<a href="spec.html" class="active">Engineering Specification</a>
+<a href="app-plan.html">App Build Plan</a>
+<a href="bom-order.html">Bill of Materials</a>
+<a href="agents.html">Agent Instructions</a></nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+<div class="layout">
+  <aside class="layout__sidebar sidebar">
+    <div class="search-box">
+      <input type="text" id="doc-search" data-base="" placeholder="Search docs&hellip; (press /)" autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <ul class="toc">
+<li class="lvl-2"><a href="#how-to-read-this-document">How to read this document</a></li>
+<li class="lvl-2"><a href="#section-1-project-overview">SECTION 1 — PROJECT OVERVIEW</a></li>
+<li class="lvl-2"><a href="#11-vision">1.1 Vision</a></li>
+<li class="lvl-2"><a href="#12-mission">1.2 Mission</a></li>
+<li class="lvl-2"><a href="#13-objectives-measurable">1.3 Objectives (measurable)</a></li>
+<li class="lvl-2"><a href="#14-innovation-and-novelty-an-honest-assessment">1.4 Innovation and novelty — an honest assessment</a></li>
+<li class="lvl-2"><a href="#15-comparison-with-existing-systems">1.5 Comparison with existing systems</a></li>
+<li class="lvl-2"><a href="#section-2-system-architecture">SECTION 2 — SYSTEM ARCHITECTURE</a></li>
+<li class="lvl-2"><a href="#21-architectural-philosophy-and-the-first-big-correction">2.1 Architectural philosophy and the first big correction</a></li>
+<li class="lvl-3"><a href="#physical-tiers">Physical tiers</a></li>
+<li class="lvl-3"><a href="#software-planes-on-the-hub">Software planes on the hub</a></li>
+<li class="lvl-2"><a href="#22-the-thirteen-conceptual-layers-what-each-one-actually-is">2.2 The thirteen conceptual layers — what each one actually is</a></li>
+<li class="lvl-2"><a href="#23-end-to-end-flow-example-grounding-the-architecture">2.3 End-to-end flow example (grounding the architecture)</a></li>
+<li class="lvl-2"><a href="#section-3-digital-twin-architecture">SECTION 3 — DIGITAL TWIN ARCHITECTURE</a></li>
+<li class="lvl-2"><a href="#31-the-correction-first-one-twin-six-views-not-six-twins">3.1 The correction first: one twin, six views — not six twins</a></li>
+<li class="lvl-2"><a href="#32-real-time-twin-the-state-core">3.2 Real-time twin (the state core)</a></li>
+<li class="lvl-2"><a href="#33-semantic-twin-meaning">3.3 Semantic twin (meaning)</a></li>
+<li class="lvl-2"><a href="#34-behavioral-twin-learned-normal">3.4 Behavioral twin (learned normal)</a></li>
+<li class="lvl-2"><a href="#35-predictive-twin">3.5 Predictive twin</a></li>
+<li class="lvl-2"><a href="#36-simulation-twin">3.6 Simulation twin</a></li>
+<li class="lvl-2"><a href="#37-knowledge-graph">3.7 Knowledge graph</a></li>
+<li class="lvl-2"><a href="#38-virtual-sensors-the-highest-leverage-idea-in-the-project">3.8 Virtual sensors — the highest-leverage idea in the project</a></li>
+<li class="lvl-2"><a href="#39-digital-shadow-vs-twin-and-the-digital-thread">3.9 Digital shadow vs. twin, and the digital thread</a></li>
+<li class="lvl-2"><a href="#section-4-physical-ai">SECTION 4 — PHYSICAL AI</a></li>
+<li class="lvl-2"><a href="#41-the-loop">4.1 The loop</a></li>
+<li class="lvl-2"><a href="#42-how-physical-ai-differs-from-adjacent-things-the-judges-question">4.2 How Physical AI differs from adjacent things (the judge&#x27;s question)</a></li>
+<li class="lvl-2"><a href="#43-where-an-llm-legitimately-fits">4.3 Where an LLM legitimately fits</a></li>
+<li class="lvl-2"><a href="#section-5-room-intelligence">SECTION 5 — ROOM INTELLIGENCE</a></li>
+<li class="lvl-2"><a href="#51-living-room-comfort-occupancy-anchor">5.1 Living Room — comfort + occupancy anchor</a></li>
+<li class="lvl-2"><a href="#52-kitchen-highest-event-density-highest-firegas-risk">5.2 Kitchen — highest event density, highest fire/gas risk</a></li>
+<li class="lvl-2"><a href="#53-bedroom-quiet-intelligence-minimal-footprint">5.3 Bedroom — quiet intelligence, minimal footprint</a></li>
+<li class="lvl-2"><a href="#54-bathroom-humidity-water-falls">5.4 Bathroom — humidity, water, falls</a></li>
+<li class="lvl-2"><a href="#55-utility-room-the-machines-live-here-richest-predictive-ground">5.5 Utility Room — the machines live here; richest predictive ground</a></li>
+<li class="lvl-2"><a href="#56-garage-security-perimeter-vehicle">5.6 Garage — security perimeter + vehicle</a></li>
+<li class="lvl-2"><a href="#57-garden-water-discipline">5.7 Garden — water discipline</a></li>
+<li class="lvl-2"><a href="#58-water-tank-pump-the-flagship-subsystem-for-india">5.8 Water Tank + Pump — the flagship subsystem for India</a></li>
+<li class="lvl-2"><a href="#59-main-electrical-panel-solar-the-houses-pulse">5.9 Main Electrical Panel + Solar — the house&#x27;s pulse</a></li>
+<li class="lvl-2"><a href="#section-6-bill-of-materials-indian-pricing-july-2026-street-prices-verify-before-purchase-hobby-market-prices-swing-30">SECTION 6 — BILL OF MATERIALS (Indian pricing, July 2026 street prices — verify before purchase; hobby-market prices swing ±30%)</a></li>
+<li class="lvl-2"><a href="#61-tier-m-mandatory-competition-prototype-minimum-useful-deployment">6.1 Tier M — Mandatory (competition prototype + minimum useful deployment)</a></li>
+<li class="lvl-2"><a href="#62-tier-r-recommended-adds-real-sensing-depth">6.2 Tier R — Recommended (adds real sensing depth)</a></li>
+<li class="lvl-2"><a href="#63-tier-p-premium">6.3 Tier P — Premium</a></li>
+<li class="lvl-2"><a href="#64-tier-f-future-phase-3">6.4 Tier F — Future (Phase 3+)</a></li>
+<li class="lvl-2"><a href="#section-7-hardware-platform">SECTION 7 — HARDWARE PLATFORM</a></li>
+<li class="lvl-2"><a href="#71-hub-arduino-uno-q-the-right-call-with-eyes-open">7.1 Hub: Arduino UNO Q — the right call, with eyes open</a></li>
+<li class="lvl-2"><a href="#72-leaf-mcu-choices">7.2 Leaf MCU choices</a></li>
+<li class="lvl-2"><a href="#73-raspberry-pi">7.3 Raspberry Pi</a></li>
+<li class="lvl-2"><a href="#74-power-architecture">7.4 Power architecture</a></li>
+<li class="lvl-2"><a href="#7579-pcb-enclosures-mechanics-3d-printing">7.5–7.9 PCB, enclosures, mechanics, 3D printing</a></li>
+<li class="lvl-2"><a href="#section-8-sensor-network-design">SECTION 8 — SENSOR NETWORK DESIGN</a></li>
+<li class="lvl-2"><a href="#81-node-taxonomy-three-node-types-not-twenty">8.1 Node taxonomy (three node types, not twenty)</a></li>
+<li class="lvl-2"><a href="#82-placement-rules-that-decide-whether-the-data-is-usable">8.2 Placement rules that decide whether the data is usable</a></li>
+<li class="lvl-2"><a href="#83-house-node-map">8.3 House node map</a></li>
+<li class="lvl-2"><a href="#section-9-edge-ai">SECTION 9 — EDGE AI</a></li>
+<li class="lvl-2"><a href="#91-pipeline-placement-compute-where-the-data-is-cheap-to-move-from">9.1 Pipeline placement — compute where the data is cheap to move from</a></li>
+<li class="lvl-2"><a href="#92-nilm-the-flagship-virtual-sensor">9.2 NILM (the flagship virtual sensor)</a></li>
+<li class="lvl-2"><a href="#93-audio-ai">9.3 Audio AI</a></li>
+<li class="lvl-2"><a href="#94-vision-ai">9.4 Vision AI</a></li>
+<li class="lvl-2"><a href="#95-sensor-fusion">9.5 Sensor fusion</a></li>
+<li class="lvl-2"><a href="#96-anomaly-detection">9.6 Anomaly detection</a></li>
+<li class="lvl-2"><a href="#97-predictive-maintenance-the-honest-version">9.7 Predictive maintenance — the honest version</a></li>
+<li class="lvl-2"><a href="#98-reinforcement-learning">9.8 Reinforcement learning</a></li>
+<li class="lvl-2"><a href="#99-federated-learning">9.9 Federated learning</a></li>
+<li class="lvl-2"><a href="#910-tinyml-toolchain">9.10 TinyML toolchain</a></li>
+<li class="lvl-2"><a href="#911-local-llm">9.11 Local LLM</a></li>
+<li class="lvl-2"><a href="#section-10-digital-twin-visualization-software">SECTION 10 — DIGITAL TWIN VISUALIZATION SOFTWARE</a></li>
+<li class="lvl-2"><a href="#101-the-comparison">10.1 The comparison</a></li>
+<li class="lvl-2"><a href="#105-developer-layer">10.5 Developer layer</a></li>
+<li class="lvl-2"><a href="#section-11-communication-architecture">SECTION 11 — COMMUNICATION ARCHITECTURE</a></li>
+<li class="lvl-2"><a href="#section-12-data-pipeline">SECTION 12 — DATA PIPELINE</a></li>
+<li class="lvl-2"><a href="#section-13-database">SECTION 13 — DATABASE</a></li>
+<li class="lvl-2"><a href="#section-14-ai-pipelines-per-domain">SECTION 14 — AI PIPELINES (per domain)</a></li>
+<li class="lvl-2"><a href="#section-15-automation-engine">SECTION 15 — AUTOMATION ENGINE</a></li>
+<li class="lvl-2"><a href="#section-16-safety-framework">SECTION 16 — SAFETY FRAMEWORK</a></li>
+<li class="lvl-2"><a href="#section-17-cybersecurity">SECTION 17 — CYBERSECURITY</a></li>
+<li class="lvl-2"><a href="#section-18-dashboard">SECTION 18 — DASHBOARD</a></li>
+<li class="lvl-2"><a href="#section-19-user-experience">SECTION 19 — USER EXPERIENCE</a></li>
+<li class="lvl-2"><a href="#section-20-roadmap">SECTION 20 — ROADMAP</a></li>
+<li class="lvl-2"><a href="#section-21-research-landscape">SECTION 21 — RESEARCH LANDSCAPE</a></li>
+<li class="lvl-2"><a href="#section-22-patents">SECTION 22 — PATENTS</a></li>
+<li class="lvl-2"><a href="#section-23-competitor-analysis-condensed-swot-deltas">SECTION 23 — COMPETITOR ANALYSIS (condensed SWOT deltas)</a></li>
+<li class="lvl-2"><a href="#section-24-hackathon-strategy-arduino-physical-ai-challenge">SECTION 24 — HACKATHON STRATEGY (Arduino Physical AI Challenge)</a></li>
+<li class="lvl-2"><a href="#section-25-critical-review-the-adversarial-pass">SECTION 25 — CRITICAL REVIEW (the adversarial pass)</a></li>
+</ul>
+  </aside>
+  <main class="doc" id="top">
+    <div class="doc-header">
+      <div class="doc-eyebrow"><span>🏛️</span> Documentation</div>
+      <h1 class="doc-title">Engineering Specification</h1>
+      <p class="doc-desc">The full system design: architecture, hardware tiers, safety framework, cybersecurity, and the adversarial self-review.</p>
+      <div class="doc-meta"><span>&#128214; 11,810 words</span><span>&#128196; docs/DOMORA_SPEC.md</span></div>
+    </div>
+    <p><strong>Digital Operating Model for Residential Awareness</strong>
+<em>A Physical AI Operating System built on a live residential Digital Twin</em></p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Document type</td>
+<td>Systems engineering specification + critical design review</td>
+</tr>
+<tr>
+<td>Intended use</td>
+<td>Arduino Physical AI Challenge prototype · startup technical design doc · research proposal seed</td>
+</tr>
+<tr>
+<td>Review stance</td>
+<td><strong>Adversarial.</strong> Every claim in the concept brief has been challenged. Where the original vision is over-scoped, this document says so and proposes the corrected architecture.</td>
+</tr>
+<tr>
+<td>Date</td>
+<td>July 2026</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>Draft for team review</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr />
+<h2 id="how-to-read-this-document">How to read this document<a href="#how-to-read-this-document" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>This is not a cheerleading document. The team brief asked for critical evaluation, and the single most important finding is stated up front:</p>
+<blockquote>
+<p><strong>The Verdict.</strong> DOMORA's core idea — a <em>closed-loop, verifying, predictive</em> model of a house running locally — is genuinely differentiated and demo-able. But the concept brief as written describes roughly <strong>4 person-years of work</strong> and conflates three products (a hackathon prototype, a commercial platform, and a research program). The winning move is a <strong>thin vertical slice</strong>: 3–4 sensor nodes, one hub, one live twin, and <strong>two closed loops that visibly act and verify on stage</strong>. Everything else in this document is the map for later phases — not the prototype.</p>
+</blockquote>
+<p>Sections 1–24 present the full architecture as if building the commercial product, with design decisions, rejected alternatives, and trade-offs called out inline in <strong>Decision</strong> blocks. Section 25 then deliberately attacks the whole design and extracts the Minimum Viable Prototype.</p>
+<hr />
+<h1 id="section-1-project-overview">SECTION 1 — PROJECT OVERVIEW<a href="#section-1-project-overview" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="11-vision">1.1 Vision<a href="#11-vision" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Every house already <em>behaves</em> like a system — energy flows, water flows, heat moves, people move, machines age — but nobody can see the system. DOMORA's vision is a house that maintains a faithful, continuously-updated computational model of itself, and uses that model to anticipate rather than react: to know a pump is failing before it fails, that a tap is dripping before the bill arrives, that a room is drifting out of comfort before anyone reaches for a switch.</p>
+<h2 id="12-mission">1.2 Mission<a href="#12-mission" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Build a <strong>local-first Physical AI operating system</strong> whose core abstraction is the Digital Twin, not the device. Devices come and go; the twin persists. The mission constraints, in priority order:</p>
+<ol>
+<li><strong>Safety</strong> — the system must never make a house less safe than a house without it.</li>
+<li><strong>Privacy</strong> — raw sensor data (especially audio/video) never leaves the premises by default.</li>
+<li><strong>Autonomy without cloud</strong> — full function with the internet cable cut.</li>
+<li><strong>Explainability</strong> — every autonomous action must be traceable to observed state + a stated reason.</li>
+<li><strong>Affordability</strong> — a mandatory tier deployable in an Indian home for less than the cost of a mid-range phone.</li>
+</ol>
+<h2 id="13-objectives-measurable">1.3 Objectives (measurable)<a href="#13-objectives-measurable" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Objective</th>
+<th>Metric</th>
+<th>Target (Phase 1 → Phase 3)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Twin fidelity</td>
+<td>State sync latency, sensor→twin</td>
+<td>&lt; 2 s → &lt; 500 ms</td>
+</tr>
+<tr>
+<td>Anomaly detection</td>
+<td>Precision on seeded faults (leak, stuck appliance)</td>
+<td>&gt; 80% → &gt; 95%, &lt; 1 false alarm/week</td>
+</tr>
+<tr>
+<td>Energy insight</td>
+<td>Appliance-level disaggregation accuracy (top 5 loads)</td>
+<td>&gt; 70% → &gt; 90% F1</td>
+</tr>
+<tr>
+<td>Closed-loop verification</td>
+<td>% of actuations verified by independent sensing</td>
+<td>100% for water/power actuations</td>
+</tr>
+<tr>
+<td>Offline autonomy</td>
+<td>Function with WAN down</td>
+<td>100% of control features</td>
+</tr>
+<tr>
+<td>Privacy</td>
+<td>Raw audio/video frames leaving LAN</td>
+<td>0 by default</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="14-innovation-and-novelty-an-honest-assessment">1.4 Innovation and novelty — an honest assessment<a href="#14-innovation-and-novelty-an-honest-assessment" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Claimed novelties, graded:</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Verdict</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;Digital twin of a house&quot;</td>
+<td><strong>Not novel</strong> as a phrase — DT research on buildings is a decade old. <strong>Novel in execution</strong>: research twins are commercial BMS-scale, cloud-hosted, and open-loop (monitoring only). A <em>residential</em>, <em>edge-resident</em>, <em>actuating</em> twin is a real gap.</td>
+<td></td>
+</tr>
+<tr>
+<td>Closed-loop <strong>verification</strong> (act → sense → confirm)</td>
+<td><strong>Genuinely differentiating.</strong> No consumer platform verifies its own actuations against independent sensors. Google/Alexa fire a command and trust the ACK. This is the heart of &quot;Physical AI&quot; and the best demo moment.</td>
+<td></td>
+</tr>
+<tr>
+<td>Virtual sensors (inferring unmeasured state)</td>
+<td><strong>Strong.</strong> NILM (load disaggregation from one current clamp) is established research but absent from consumer smart homes; acoustic appliance monitoring likewise. Cheap hardware + inference = differentiation.</td>
+<td></td>
+</tr>
+<tr>
+<td>Predictive maintenance for home appliances</td>
+<td><strong>Overclaimed for Phase 1.</strong> Real predictive maintenance needs failure data you won't have. Ship <em>anomaly detection</em> (deviation from learned normal) and call it that; earn &quot;predictive&quot; later. See §14.</td>
+<td></td>
+</tr>
+<tr>
+<td>&quot;Learns normal behavior&quot;</td>
+<td>Established technique (statistical + autoencoder baselines), but genuinely rare in consumer products, which are rule-based. Keep.</td>
+<td></td>
+</tr>
+<tr>
+<td>Local LLM reasoning</td>
+<td><strong>Buzzword risk.</strong> Useful only as an <em>interface</em> (explain state, translate intent→rules). It must never sit in the control loop. See §9.11.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The defensible one-sentence novelty:</strong> <em>DOMORA is the first residential system where every autonomous action is planned against a live model and verified against independent physical evidence — a house that checks its own work.</em></p>
+<h2 id="15-comparison-with-existing-systems">1.5 Comparison with existing systems<a href="#15-comparison-with-existing-systems" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Google Home</th>
+<th>Alexa</th>
+<th>Apple Home</th>
+<th>SmartThings</th>
+<th>Home Assistant</th>
+<th>Commercial BMS / DT research</th>
+<th><strong>DOMORA</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core abstraction</td>
+<td>Device + voice</td>
+<td>Device + skill</td>
+<td>Device/scene</td>
+<td>Device + routine</td>
+<td>Entity + automation</td>
+<td>Building model</td>
+<td><strong>House model (twin)</strong></td>
+</tr>
+<tr>
+<td>Intelligence locus</td>
+<td>Cloud</td>
+<td>Cloud</td>
+<td>Hybrid</td>
+<td>Cloud→edge (drifting local)</td>
+<td>Local, rule-based</td>
+<td>Cloud analytics</td>
+<td><strong>Edge, model-based</strong></td>
+</tr>
+<tr>
+<td>Works offline</td>
+<td>Partially</td>
+<td>Barely</td>
+<td>Mostly</td>
+<td>Partially</td>
+<td><strong>Yes</strong></td>
+<td>Varies</td>
+<td><strong>Yes (by design)</strong></td>
+</tr>
+<tr>
+<td>Learns baselines</td>
+<td>Limited (Nest)</td>
+<td>Limited</td>
+<td>No</td>
+<td>No</td>
+<td>No (add-ons only)</td>
+<td>Yes</td>
+<td><strong>Yes, core</strong></td>
+</tr>
+<tr>
+<td>Verifies actions</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Rarely</td>
+<td><strong>Yes, always</strong></td>
+</tr>
+<tr>
+<td>Predicts / simulates</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Yes (HVAC-scale)</td>
+<td><strong>Yes, house-scale</strong></td>
+</tr>
+<tr>
+<td>Appliance-level energy w/o per-plug HW</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>N/A</td>
+<td><strong>Yes (NILM)</strong></td>
+</tr>
+<tr>
+<td>Privacy of audio</td>
+<td>Cloud ASR</td>
+<td>Cloud ASR</td>
+<td>On-device (partial)</td>
+<td>Cloud</td>
+<td>Local</td>
+<td>N/A</td>
+<td><strong>Local-only, non-speech events</strong></td>
+</tr>
+<tr>
+<td>Open / hackable</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Partially</td>
+<td><strong>Yes</strong></td>
+<td>No</td>
+<td>Yes (planned)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Against Home Assistant specifically</strong> — this is DOMORA's most important comparison, because HA is the obvious &quot;why not just use…&quot; question and judges will ask it. HA is a <em>device integration and automation hub</em>: world-class at connecting 2,000+ integrations, fundamentally rule-based, with no model of the house. It does not know that the kitchen and living room share a wall, that the pump feeds the tank, that a flow reading with all taps closed is physically impossible. DOMORA's honest positioning: <strong>not an HA competitor but an intelligence layer that could sit on top of HA</strong> (consume its entity states via MQTT) while owning the twin, the learning, and the verification loop. This positioning also de-risks the integration problem — see §25.</p>
+<p><strong>Against digital-twin research</strong> (building-scale DT literature, NVIDIA Omniverse-class industrial twins): those systems assume BIM models, commercial sensor density, cloud compute, and professional commissioning. None target the residential price point, none run on a 2 GB edge device, and almost all are <em>digital shadows</em> (physical→digital only). DOMORA's research contribution is exactly the neglected quadrant: <strong>low-cost, self-commissioning, bidirectional, edge-resident residential twins.</strong> See §21 for gap analysis.</p>
+<hr />
+<h1 id="section-2-system-architecture">SECTION 2 — SYSTEM ARCHITECTURE<a href="#section-2-system-architecture" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="21-architectural-philosophy-and-the-first-big-correction">2.1 Architectural philosophy and the first big correction<a href="#21-architectural-philosophy-and-the-first-big-correction" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>The brief lists 13 layers. Thirteen layers is an org chart, not an architecture — several of them (Physical AI / Reasoning / Automation / Knowledge) describe <em>aspects of the same software process</em> and drawing them as stacked layers invites building 13 services on a 2 GB board. The corrected architecture keeps the <em>conceptual</em> 13-layer view for communication (it is genuinely useful for the pitch and the docs) but implements them as <strong>three physical tiers and five software planes</strong>.</p>
+<h3 id="physical-tiers">Physical tiers<a href="#physical-tiers" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="mermaid-wrap"><div class="mermaid">flowchart TB
+    subgraph T1[&quot;Tier 1 — Leaf Nodes (per room / per asset)&quot;]
+        N1[&quot;ESP32-C6 room node&lt;br/&gt;env + occupancy + door&quot;]
+        N2[&quot;ESP32-S3 perception node&lt;br/&gt;audio / camera (opt-in)&quot;]
+        N3[&quot;ESP32-C6 utility node&lt;br/&gt;CT clamps, flow, valves, relays&quot;]
+    end
+    subgraph T2[&quot;Tier 2 — Edge Hub (one per house)&quot;]
+        HUB[&quot;Arduino UNO Q&lt;br/&gt;Linux (Debian) on Dragonwing QRB2210&lt;br/&gt;+ STM32U585 real-time MCU&lt;br/&gt;Twin runtime · AI pipelines · MQTT broker · DB · dashboard server&quot;]
+    end
+    subgraph T3[&quot;Tier 3 — Optional Cloud (relay only)&quot;]
+        CLOUD[&quot;Encrypted backup · remote access relay (WireGuard) · fleet OTA&lt;br/&gt;NO raw sensor data, NO control path&quot;]
+    end
+    N1 -- &quot;MQTT/TLS over Wi-Fi&quot; --&gt; HUB
+    N2 -- &quot;events only, never raw media&quot; --&gt; HUB
+    N3 -- &quot;MQTT + hardwired interlocks&quot; --&gt; HUB
+    HUB -. &quot;opt-in, outbound only&quot; .-&gt; CLOUD
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart TB
+    subgraph T1[&quot;Tier 1 — Leaf Nodes (per room / per asset)&quot;]
+        N1[&quot;ESP32-C6 room node&lt;br/&gt;env + occupancy + door&quot;]
+        N2[&quot;ESP32-S3 perception node&lt;br/&gt;audio / camera (opt-in)&quot;]
+        N3[&quot;ESP32-C6 utility node&lt;br/&gt;CT clamps, flow, valves, relays&quot;]
+    end
+    subgraph T2[&quot;Tier 2 — Edge Hub (one per house)&quot;]
+        HUB[&quot;Arduino UNO Q&lt;br/&gt;Linux (Debian) on Dragonwing QRB2210&lt;br/&gt;+ STM32U585 real-time MCU&lt;br/&gt;Twin runtime · AI pipelines · MQTT broker · DB · dashboard server&quot;]
+    end
+    subgraph T3[&quot;Tier 3 — Optional Cloud (relay only)&quot;]
+        CLOUD[&quot;Encrypted backup · remote access relay (WireGuard) · fleet OTA&lt;br/&gt;NO raw sensor data, NO control path&quot;]
+    end
+    N1 -- &quot;MQTT/TLS over Wi-Fi&quot; --&gt; HUB
+    N2 -- &quot;events only, never raw media&quot; --&gt; HUB
+    N3 -- &quot;MQTT + hardwired interlocks&quot; --&gt; HUB
+    HUB -. &quot;opt-in, outbound only&quot; .-&gt; CLOUD
+</pre></div>
+<p><strong>Decision — two tiers of compute, not three.</strong> The brief's &quot;every room becomes an intelligent node&quot; tempts a per-room hub tier (e.g., an RP2040 aggregator per room). Rejected: it triples cost and failure points for zero benefit at house scale. A house produces perhaps 50–200 sensor messages/second peak; a single hub handles that with &gt;90% headroom. Room-level &quot;intelligence&quot; lives in the leaf firmware (local reflexes + TinyML) and in per-room twin partitions on the hub — not in extra hardware.</p>
+<p><strong>Decision — hub survives node loss; nodes survive hub loss.</strong> Each leaf node keeps a minimal reflex layer (e.g., leak sensor → close valve; smoke → sound local buzzer) that functions with the hub dead. This is the single most important architectural rule in the document: <em>safety behaviors are distributed; intelligence is centralized.</em></p>
+<h3 id="software-planes-on-the-hub">Software planes on the hub<a href="#software-planes-on-the-hub" class="heading-anchor" aria-label="Link to this section">#</a></h3>
+<div class="mermaid-wrap"><div class="mermaid">flowchart LR
+    subgraph EDGE[&quot;Edge Hub — software planes&quot;]
+        direction TB
+        DP[&quot;1 · Data plane&lt;br/&gt;MQTT broker · ingest · validation · time-series store&quot;]
+        TW[&quot;2 · Twin plane&lt;br/&gt;live state graph · semantic model · virtual sensors&quot;]
+        AI[&quot;3 · Inference plane&lt;br/&gt;NILM · acoustic events · occupancy fusion · anomaly detection&quot;]
+        DE[&quot;4 · Decision plane&lt;br/&gt;rules + planner + conflict resolution + verification&quot;]
+        SF[&quot;5 · Safety plane&lt;br/&gt;invariant monitor · overrides · watchdogs — has veto over plane 4&quot;]
+    end
+    DP --&gt; TW --&gt; AI --&gt; DE
+    SF -.veto.-&gt; DE
+    DE --&gt;|&quot;commands&quot;| DP
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart LR
+    subgraph EDGE[&quot;Edge Hub — software planes&quot;]
+        direction TB
+        DP[&quot;1 · Data plane&lt;br/&gt;MQTT broker · ingest · validation · time-series store&quot;]
+        TW[&quot;2 · Twin plane&lt;br/&gt;live state graph · semantic model · virtual sensors&quot;]
+        AI[&quot;3 · Inference plane&lt;br/&gt;NILM · acoustic events · occupancy fusion · anomaly detection&quot;]
+        DE[&quot;4 · Decision plane&lt;br/&gt;rules + planner + conflict resolution + verification&quot;]
+        SF[&quot;5 · Safety plane&lt;br/&gt;invariant monitor · overrides · watchdogs — has veto over plane 4&quot;]
+    end
+    DP --&gt; TW --&gt; AI --&gt; DE
+    SF -.veto.-&gt; DE
+    DE --&gt;|&quot;commands&quot;| DP
+</pre></div>
+<h2 id="22-the-thirteen-conceptual-layers-what-each-one-actually-is">2.2 The thirteen conceptual layers — what each one actually is<a href="#22-the-thirteen-conceptual-layers-what-each-one-actually-is" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Layer</th>
+<th>What it really is</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Physical</strong></td>
+<td>The house itself: wiring, plumbing, appliances, structure. Design consideration: sensor/actuator mounting, mains isolation, valve placement.</td>
+<td>§7, §16</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Sensor</strong></td>
+<td>Distributed leaf nodes, each a bundle of transducers + MCU. Owns signal conditioning, calibration, local buffering, reflexes.</td>
+<td>§8</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Communication</strong></td>
+<td>Wi-Fi + MQTT/TLS now; Thread/Matter later; ESP-NOW for battery leaves; hardwired lines for safety interlocks (never wireless).</td>
+<td>§11</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Edge</strong></td>
+<td>The UNO Q hub: Linux side runs services, MCU side (STM32U585) runs the hardware watchdog + safety I/O.</td>
+<td>§7, §9</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Physical AI</strong></td>
+<td>Not a layer — the <em>loop</em>: observe→understand→predict→plan→act→verify→learn, implemented across planes 2–5.</td>
+<td>§4</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Digital Twin</strong></td>
+<td>The state graph + semantic model + history + predictive models. The system's shared memory; every other plane reads/writes it.</td>
+<td>§3</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Knowledge</strong></td>
+<td>The ontology: rooms, assets, connections (pipe/wire/airflow topology), capabilities. Lightweight property graph in SQLite, Brick-schema-inspired.</td>
+<td>§3.7, §13</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Reasoning</strong></td>
+<td>Deterministic planner + learned models. Explicitly <em>not</em> an LLM in the loop.</td>
+<td>§4, §15</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Automation</strong></td>
+<td>The execution engine: rules, schedules, state machines, priorities, conflict resolution.</td>
+<td>§15</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Safety</strong></td>
+<td>Invariant monitors + hardware interlocks + certified standalone life-safety devices. Vetoes everything above it.</td>
+<td>§16</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>Cloud</strong></td>
+<td>Optional, outbound-only: backup, remote relay, fleet OTA. Never in the control path.</td>
+<td>§17</td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>Visualization</strong></td>
+<td>Web dashboard (Three.js twin view + telemetry), served from the hub.</td>
+<td>§10, §18</td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>Developer</strong></td>
+<td>MQTT topic contract, REST/WebSocket API, simulation harness, node SDK (firmware template).</td>
+<td>§10.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="23-end-to-end-flow-example-grounding-the-architecture">2.3 End-to-end flow example (grounding the architecture)<a href="#23-end-to-end-flow-example-grounding-the-architecture" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p><em>Washing machine bearing degradation:</em> utility-node CT clamp streams the machine's current waveform → hub extracts per-cycle features (spin-phase current spectrum) → anomaly model flags rising harmonic energy vs. the machine's learned baseline → twin marks asset <code>washer.health = degrading</code> with evidence → decision plane raises a maintenance prediction (no actuation) → dashboard timeline shows the drift over 3 weeks → user confirms bearing noise → label feeds back into the model. No cloud, no camera, one ₹300 clamp.</p>
+<p><em>Leak:</em> flow sensor shows 2 L/min at 03:00 with <code>occupancy = all asleep</code> and all known fixtures' expected flow = 0 → twin's water-balance virtual sensor flags impossible state → decision plane closes motorized valve → <strong>verification: flow must fall to 0 within 10 s; if not, escalate alarm</strong> (valve failed or bypass leak) → event logged with full causal chain. This is the flagship demo loop (§24).</p>
+<hr />
+<h1 id="section-3-digital-twin-architecture">SECTION 3 — DIGITAL TWIN ARCHITECTURE<a href="#section-3-digital-twin-architecture" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="31-the-correction-first-one-twin-six-views-not-six-twins">3.1 The correction first: one twin, six views — not six twins<a href="#31-the-correction-first-one-twin-six-views-not-six-twins" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>The brief lists Real-time / Semantic / Behavioral / Predictive / Simulation / Historical twins as if they were separate systems. Building six twin subsystems is how the project dies. The correct model: <strong>one canonical state store with six views over it</strong>, sharing one identity scheme (the knowledge graph's asset IDs) and one clock.</p>
+<div class="mermaid-wrap"><div class="mermaid">flowchart TB
+    KG[&quot;Knowledge Graph&lt;br/&gt;(structure: rooms, assets, connections, capabilities)&quot;]
+    RT[&quot;Real-time state&lt;br/&gt;(last-known value + confidence + timestamp per point)&quot;]
+    HIST[&quot;Historical twin&lt;br/&gt;(time-series + event log)&quot;]
+    BEH[&quot;Behavioral models&lt;br/&gt;(learned baselines per asset/room)&quot;]
+    PRED[&quot;Predictive view&lt;br/&gt;(short-horizon forecasts)&quot;]
+    SIM[&quot;Simulation view&lt;br/&gt;(what-if rollouts, offline)&quot;]
+    VS[&quot;Virtual sensors&lt;br/&gt;(inferred, unmeasured state)&quot;]
+    KG --- RT
+    RT --&gt; HIST
+    HIST --&gt; BEH
+    BEH --&gt; PRED
+    BEH --&gt; VS
+    RT --&gt; VS
+    PRED --&gt; SIM
+    KG --&gt; SIM
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart TB
+    KG[&quot;Knowledge Graph&lt;br/&gt;(structure: rooms, assets, connections, capabilities)&quot;]
+    RT[&quot;Real-time state&lt;br/&gt;(last-known value + confidence + timestamp per point)&quot;]
+    HIST[&quot;Historical twin&lt;br/&gt;(time-series + event log)&quot;]
+    BEH[&quot;Behavioral models&lt;br/&gt;(learned baselines per asset/room)&quot;]
+    PRED[&quot;Predictive view&lt;br/&gt;(short-horizon forecasts)&quot;]
+    SIM[&quot;Simulation view&lt;br/&gt;(what-if rollouts, offline)&quot;]
+    VS[&quot;Virtual sensors&lt;br/&gt;(inferred, unmeasured state)&quot;]
+    KG --- RT
+    RT --&gt; HIST
+    HIST --&gt; BEH
+    BEH --&gt; PRED
+    BEH --&gt; VS
+    RT --&gt; VS
+    PRED --&gt; SIM
+    KG --&gt; SIM
+</pre></div>
+<h2 id="32-real-time-twin-the-state-core">3.2 Real-time twin (the state core)<a href="#32-real-time-twin-the-state-core" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>A typed key-value graph: every <em>point</em> (measurable or commandable property of an asset) holds <code>{value, unit, timestamp, source, confidence, staleness_policy}</code>. Confidence matters: a radar-based occupancy value at 0.95 and a CO2-inferred one at 0.6 fuse differently. Staleness policy makes silence meaningful — a node that stops reporting flips its points to <code>stale</code>, which is itself an anomaly signal (dead node, Wi-Fi hole, power loss in that room).</p>
+<p><strong>Decision — in-memory state with write-through journaling, not a database as the live store.</strong> The live twin is a few thousand points; it lives in RAM (a Python/Rust process on the hub) and journals changes to SQLite. Querying a DB for every control decision adds latency and failure modes for nothing.</p>
+<h2 id="33-semantic-twin-meaning">3.3 Semantic twin (meaning)<a href="#33-semantic-twin-meaning" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Raw: <code>node7/adc3 = 512</code>. Semantic: <code>kitchen.sink.flow = 4.2 L/min, feeds: kitchen.sink, fed_by: main_line</code>. The semantic layer is what lets reasoning generalize (&quot;close the valve <em>upstream of</em> the leak&quot;). Implemented as the knowledge graph (§3.7) binding every point to an asset, a location, and physical connections.</p>
+<p><strong>Decision — adapt Brick Schema concepts, don't adopt it wholesale.</strong> Brick (the academic building-ontology standard) is commercial-HVAC-centric and RDF/SPARQL tooling is too heavy for the hub. We keep its core insight — <em>points belong to equipment, equipment to locations, connected by typed relationships (feeds, hasPart, isUpstreamOf)</em> — as a property graph in SQLite. This is also a publishable contribution: a residential ontology profile (§21).</p>
+<h2 id="34-behavioral-twin-learned-normal">3.4 Behavioral twin (learned normal)<a href="#34-behavioral-twin-learned-normal" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Per asset and per room: expected daily load shapes, appliance current signatures, water-use event distributions, occupancy rhythms, thermal response (how fast does the bedroom heat/cool given outdoor temp — a 1R1C thermal model fitted from history). These baselines are the reference against which &quot;anomaly&quot; is defined. Cold-start honesty: the system needs <strong>2–4 weeks</strong> of data before baselines are meaningful; during that period it runs in observe-and-suggest mode only. Say this in the pitch before a judge asks.</p>
+<h2 id="35-predictive-twin">3.5 Predictive twin<a href="#35-predictive-twin" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Short-horizon forecasts written back as future-dated points: tank empty in ~6 h at current draw; bedroom hits 31 °C by 15:00 without intervention; tomorrow's solar yield from weather + panel history. Prediction here is mostly <em>simple models done well</em> — exponential smoothing, fitted RC thermal models, regressors — not deep learning. Deep models are reserved for perception (audio, NILM), where they earn their cost.</p>
+<h2 id="36-simulation-twin">3.6 Simulation twin<a href="#36-simulation-twin" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Offline what-if: replay history with a modified policy (&quot;what would pre-cooling at 13:00 have cost/saved?&quot;), Monte-Carlo tank-sizing, rule regression testing before deploying a new automation. <strong>Decision — simulation runs on a laptop/CI against exported twin data, not on the hub.</strong> The hub has no spare compute and no need: simulation is a development-time and analysis-time activity. This also gives the developer layer its testing story: every new automation rule must pass replay-simulation against 30 days of real history without safety violations.</p>
+<h2 id="37-knowledge-graph">3.7 Knowledge graph<a href="#37-knowledge-graph" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Nodes: <code>House → Floors → Rooms → Assets → Points</code>, plus infrastructure chains (<code>Mains → RCD → Circuit → Socket → Appliance</code>; <code>Municipal/Tank → Pump → Pipe → Fixture</code>). Edges: <code>contains, feeds, isUpstreamOf, powers, senses, actuates, adjacentTo</code>. ~500 nodes for a full house — trivially small; the value is in the edge semantics, which enable causal queries: <em>&quot;what can I shut off to isolate this leak with least disruption?&quot;</em> is a graph traversal, not an AI problem.</p>
+<h2 id="38-virtual-sensors-the-highest-leverage-idea-in-the-project">3.8 Virtual sensors — the highest-leverage idea in the project<a href="#38-virtual-sensors-the-highest-leverage-idea-in-the-project" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Inferred quantities with no dedicated hardware:</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Virtual sensor</th>
+<th>Inferred from</th>
+<th>Replaces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-appliance power</td>
+<td>One CT clamp at panel + NILM</td>
+<td>₹700 × N smart plugs</td>
+</tr>
+<tr>
+<td>Water balance / hidden leak</td>
+<td>Tank level ± flow integration vs. fixture events</td>
+<td>Per-pipe flow meters</td>
+</tr>
+<tr>
+<td>Room occupancy count (coarse)</td>
+<td>Radar + PIR + CO2 slope + door events, fused</td>
+<td>Cameras</td>
+</tr>
+<tr>
+<td>Appliance cycle state (washer rinsing vs spinning)</td>
+<td>Current signature + acoustic signature</td>
+<td>Smart appliances</td>
+</tr>
+<tr>
+<td>Window open (unsensed windows)</td>
+<td>Temp/humidity transient + outdoor delta</td>
+<td>Extra contact sensors</td>
+</tr>
+<tr>
+<td>Pump health</td>
+<td>Current draw vs. flow delivered (efficiency drift)</td>
+<td>Vibration sensor kits</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Every virtual sensor carries confidence and shows its evidence in the UI — this is both the explainability story and the demo &quot;wow&quot; (the system <em>knows</em> the kettle is on, and can show you the current step it saw).</p>
+<h2 id="39-digital-shadow-vs-twin-and-the-digital-thread">3.9 Digital shadow vs. twin, and the digital thread<a href="#39-digital-shadow-vs-twin-and-the-digital-thread" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p><em>Shadow</em> = physical→digital sync only (monitoring). <em>Twin</em> = bidirectional: the model also drives the physical (actuation) and the physical verifies the model (closed loop). Most &quot;digital twin&quot; products are shadows; DOMORA's claim to the word &quot;twin&quot; <strong>is</strong> the verification loop. The <em>digital thread</em> is the lifetime record per asset: installed date, baselines, anomalies, maintenance events, model versions — the asset's biography, which is what makes long-horizon health assessment possible and (Phase 4) makes an appliance's history portable to insurers/service techs with owner consent.</p>
+<hr />
+<h1 id="section-4-physical-ai">SECTION 4 — PHYSICAL AI<a href="#section-4-physical-ai" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="41-the-loop">4.1 The loop<a href="#41-the-loop" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="mermaid-wrap"><div class="mermaid">flowchart LR
+    O[&quot;OBSERVE&lt;br/&gt;sensors → validated points&quot;] --&gt; U[&quot;UNDERSTAND&lt;br/&gt;fusion + semantics:&lt;br/&gt;state estimation&quot;]
+    U --&gt; P[&quot;PREDICT&lt;br/&gt;what happens if&lt;br/&gt;nothing changes&quot;]
+    P --&gt; R[&quot;REASON/PLAN&lt;br/&gt;pick action vs goals&lt;br/&gt;+ constraints&quot;]
+    R --&gt; A[&quot;ACT&lt;br/&gt;command actuators&quot;]
+    A --&gt; V[&quot;VERIFY&lt;br/&gt;did reality change&lt;br/&gt;as the model expected?&quot;]
+    V --&gt;|&quot;match&quot;| O
+    V --&gt;|&quot;mismatch&quot;| L[&quot;LEARN / ESCALATE&lt;br/&gt;update model or alert human&quot;]
+    L --&gt; O
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart LR
+    O[&quot;OBSERVE&lt;br/&gt;sensors → validated points&quot;] --&gt; U[&quot;UNDERSTAND&lt;br/&gt;fusion + semantics:&lt;br/&gt;state estimation&quot;]
+    U --&gt; P[&quot;PREDICT&lt;br/&gt;what happens if&lt;br/&gt;nothing changes&quot;]
+    P --&gt; R[&quot;REASON/PLAN&lt;br/&gt;pick action vs goals&lt;br/&gt;+ constraints&quot;]
+    R --&gt; A[&quot;ACT&lt;br/&gt;command actuators&quot;]
+    A --&gt; V[&quot;VERIFY&lt;br/&gt;did reality change&lt;br/&gt;as the model expected?&quot;]
+    V --&gt;|&quot;match&quot;| O
+    V --&gt;|&quot;mismatch&quot;| L[&quot;LEARN / ESCALATE&lt;br/&gt;update model or alert human&quot;]
+    L --&gt; O
+</pre></div>
+<p>Each stage, concretely:</p>
+<ul>
+<li><strong>Observe</strong> — ingest, validate (range/rate-of-change checks), timestamp, de-noise. Bad data rejected <em>here</em>, with the rejection itself logged as a sensor-health signal.</li>
+<li><strong>Understand</strong> — fuse multi-sensor evidence into semantic state (occupancy estimation, appliance identification, water-balance closure). This is state estimation, the least glamorous and most valuable stage.</li>
+<li><strong>Predict</strong> — roll the behavioral models forward over minutes-to-hours.</li>
+<li><strong>Reason/Plan</strong> — deterministic planner: given goals (comfort, cost, safety) and the predicted trajectory, select actions. Constraint-checked against the safety plane <em>before</em> execution.</li>
+<li><strong>Act</strong> — issue commands with an explicit <strong>expected effect</strong>: <code>(point, expected_direction, magnitude, deadline)</code>.</li>
+<li><strong>Verify</strong> — the differentiator. Every command's expected effect is checked against independent sensing. Three outcomes: <em>confirmed</em> (close loop), <em>failed</em> (actuator fault → retry once → escalate + mark asset suspect), <em>unexpected side-effect</em> (model wrong → flag for learning). A stuck valve is <em>discovered the day it sticks, not the day of the flood.</em></li>
+<li><strong>Learn</strong> — nightly: baselines re-fit, thresholds recalibrated, user feedback (accepted/dismissed alerts) folded in as labels.</li>
+</ul>
+<h2 id="42-how-physical-ai-differs-from-adjacent-things-the-judges-question">4.2 How Physical AI differs from adjacent things (the judge's question)<a href="#42-how-physical-ai-differs-from-adjacent-things-the-judges-question" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Has a world model?</th>
+<th>Acts on the world?</th>
+<th>Verifies its actions?</th>
+<th>Learns the specific site?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LLMs</strong></td>
+<td>Text-statistical, not grounded; no persistent state, no sensors, no time</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>IoT</strong></td>
+<td>No model — telemetry pipes</td>
+<td>Sometimes (remote control)</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Rule automation</strong> (incl. HA)</td>
+<td>No — stateless triggers</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Robotics</strong></td>
+<td>Yes (ego-centric, one body)</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Sometimes</td>
+</tr>
+<tr>
+<td><strong>DOMORA Physical AI</strong></td>
+<td>Yes — site-specific twin</td>
+<td>Yes</td>
+<td><strong>Yes, always</strong></td>
+<td><strong>Yes — the house is the dataset</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The crisp framing: <strong>DOMORA treats the house as a robot</strong> — a robot with distributed senses, slow actuators, and people living inside it. Robotics discipline (state estimation, planning under uncertainty, closed-loop control, safety envelopes) applied to a building. That's what &quot;Physical AI&quot; means here, and why it is neither an LLM wrapper nor IoT rebranded.</p>
+<h2 id="43-where-an-llm-legitimately-fits">4.3 Where an LLM legitimately fits<a href="#43-where-an-llm-legitimately-fits" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Interface, not intellect: translating &quot;warn me if the geyser is left on when we leave&quot; into a rule the deterministic engine executes; narrating twin state (&quot;water use is 30% above your Friday normal; the evidence is…&quot;). Runs on-hub if a small model fits (§9.11), else the feature degrades gracefully to forms and templated text. <strong>The control loop must be fully functional with the LLM deleted</strong> — that sentence goes in the pitch.</p>
+<hr />
+<h1 id="section-5-room-intelligence">SECTION 5 — ROOM INTELLIGENCE<a href="#section-5-room-intelligence" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p>Format per room: hardware, intelligence, the room's twin &amp; state machine, safety, and the honest cut-list (what the brief implied that we reject or defer). Sensor part choices and prices are justified in §6; placement in §8.</p>
+<h2 id="51-living-room-comfort-occupancy-anchor">5.1 Living Room — <em>comfort + occupancy anchor</em><a href="#51-living-room-comfort-occupancy-anchor" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Sensors:</strong> LD2410 mmWave radar (presence incl. still humans) + PIR (fast trigger, radar disambiguation), BME280 (T/RH/P), SGP40 (VOC), light sensor (VEML7700), window/door reed contacts, INMP441 mic (opt-in acoustic events: glass break, alarm sounds, TV-on).</li>
+<li><strong>Actuators:</strong> fan/AC via IR blaster + smart relay; lights via relay/dimmer.</li>
+<li><strong>Intelligence:</strong> occupancy fusion (radar+PIR+CO2 slope+door), thermal comfort loop using the fitted room RC model — pre-act, don't react: start cooling <em>before</em> the 17:00 occupancy pattern the behavioral twin has learned.</li>
+<li><strong>State machine:</strong> <code>EMPTY → OCCUPIED_ACTIVE → OCCUPIED_STILL → EMPTY(pending, 10 min radar-confirmed)</code>. The <code>OCCUPIED_STILL</code> state is why radar is mandatory — PIR-only systems turn lights off on reading humans, the canonical smart-home failure.</li>
+<li><strong>Verify example:</strong> commanded AC on → expect supply-side current signature at panel within 60 s AND temp slope inflection within 10 min; else flag (AC fault, IR miss, or compressor issue).</li>
+<li><strong>Cut:</strong> camera. Occupancy is achievable without it; the privacy cost in the <em>most-lived-in room</em> outweighs marginal accuracy.</li>
+</ul>
+<h2 id="52-kitchen-highest-event-density-highest-firegas-risk">5.2 Kitchen — <em>highest event density, highest fire/gas risk</em><a href="#52-kitchen-highest-event-density-highest-firegas-risk" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Sensors:</strong> MQ-6 LPG sensor (mounted LOW — LPG sinks; this placement detail is a demo-able competence signal), heat detector (not smoke — cooking fumes make smoke detectors cry wolf in Indian kitchens), BME280, flow sensor on sink line, current signature of fridge/microwave/kettle via NILM, leak probes under sink.</li>
+<li><strong>Actuators:</strong> exhaust fan relay; <strong>LPG solenoid shutoff on the regulator line</strong>; sink valve.</li>
+<li><strong>Intelligence:</strong> acoustic + power fusion for appliance states; fridge compressor health (duty-cycle drift = failing door seal or gas leak — a genuinely useful prediction from one clamp); &quot;stove on + kitchen empty &gt; N min&quot; hazard rule.</li>
+<li><strong>Safety:</strong> gas response is a <strong>leaf-node reflex</strong>: MQ-6 threshold → close LPG solenoid + buzzer + exhaust on, <em>hub or no hub</em>. Hub adds context (notify, log, verify solenoid closed via gas decay curve). MQ-x sensors drift and cross-react (§8); the certified detector requirement of §16 stands regardless.</li>
+</ul>
+<h2 id="53-bedroom-quiet-intelligence-minimal-footprint">5.3 Bedroom — <em>quiet intelligence, minimal footprint</em><a href="#53-bedroom-quiet-intelligence-minimal-footprint" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Radar (presence + LD2410's coarse motion → sleep stillness proxy), BME280, light, window contact. <strong>No microphone, no camera — hard line.</strong> Night mode: safety-only automations, all notifications deferred, lights ramp dim-red if bathroom trip detected. CO2 (if premium SCD40 fitted): ventilation nudge when sleeping CO2 &gt; 1200 ppm — a real, felt comfort win.</li>
+<li><strong>Cut:</strong> sleep-quality scoring. Wearables do it better; radar-based sleep staging is a research project by itself.</li>
+</ul>
+<h2 id="54-bathroom-humidity-water-falls">5.4 Bathroom — <em>humidity, water, falls</em><a href="#54-bathroom-humidity-water-falls" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Humidity spike detection (shower) → exhaust fan auto with learned run-on time; leak probes at floor trap; flow on geyser line; <strong>geyser element health</strong>: power draw vs. temperature rise time drifting = scale buildup — a strong India-relevant prediction. Presence via radar (fall-relevant: <code>OCCUPIED_STILL</code> on the <em>floor zone</em> for &gt; N min at night → gentle check-in escalation). No mic, no camera, obviously.</li>
+</ul>
+<h2 id="55-utility-room-the-machines-live-here-richest-predictive-ground">5.5 Utility Room — <em>the machines live here; richest predictive ground</em><a href="#55-utility-room-the-machines-live-here-richest-predictive-ground" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Washer current-signature health (§2.3 example), water inlet flow, leak probes, vibration (MPU6050 on washer chassis — spin imbalance / bearing wear), iron-left-on detection (sustained resistive load + room empty).</li>
+</ul>
+<h2 id="56-garage-security-perimeter-vehicle">5.6 Garage — <em>security perimeter + vehicle</em><a href="#56-garage-security-perimeter-vehicle" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Door state (reed + tilt), radar presence, CO alert if any combustion appliance/vehicle idling (MQ-7 class + certified CO alarm), door-left-open-at-night rule with verified auto-close <em>only if</em> the door has a certified safety edge/beam — otherwise notify-only. <strong>Never auto-close a garage door without an entrapment sensor. Non-negotiable.</strong></li>
+</ul>
+<h2 id="57-garden-water-discipline">5.7 Garden — <em>water discipline</em><a href="#57-garden-water-discipline" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Soil moisture (capacitive, not resistive — resistive probes corrode in weeks), valve per zone, flow verification of every irrigation run (flow while valve commanded closed = stuck valve or burst line; no flow while open = clog/empty tank). Irrigation planned from soil model + weather forecast (skip before rain). <strong>Cut:</strong> per-plant sensing, camera plant-health — Phase 5 toys.</li>
+</ul>
+<h2 id="58-water-tank-pump-the-flagship-subsystem-for-india">5.8 Water Tank + Pump — <em>the flagship subsystem for India</em><a href="#58-water-tank-pump-the-flagship-subsystem-for-india" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Ultrasonic level (AJ-SR04M, waterproof probe class), pump current clamp, pump-line flow.</li>
+<li><strong>The trio enables real diagnostics:</strong> pump ON + current normal + no level rise = <strong>dry run or broken impeller → cut pump immediately</strong> (dry-run destroys seals in minutes); level falling with all fixtures idle = tank-side leak/overflow; efficiency (litres-raised per kWh) trending down = impeller wear or suction blockage — <em>this is honest predictive maintenance from ₹800 of sensing</em>.</li>
+<li>Level forecast → &quot;water ends ~18:30 today&quot; → auto-refill scheduled to solar surplus window or off-peak.</li>
+<li>State machine: <code>IDLE → FILLING(verify: level slope &gt; threshold) → FULL(cutoff, verify: flow=0) → FAULT(dry-run | no-rise | overflow)</code>.</li>
+</ul>
+<h2 id="59-main-electrical-panel-solar-the-houses-pulse">5.9 Main Electrical Panel + Solar — <em>the house's pulse</em><a href="#59-main-electrical-panel-solar-the-houses-pulse" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>3× SCT-013 CT clamps (or PZEM-004T modules) on mains ± phases, one on solar feed; voltage monitoring (brownout/surge log — very India-relevant); this node feeds NILM for the whole house. Solar: yield vs. irradiance-normalized baseline → &quot;panels 12% below expected — cleaning due&quot; (dust soiling is the dominant, easily-predicted solar fault in India). Load-shifting advice (later: control) into solar surplus. <strong>All panel work behind an RCD, installed by an electrician; the node is sensing-first, and any mains actuation goes through certified contactors (§16).</strong></li>
+</ul>
+<hr />
+<h1 id="section-6-bill-of-materials-indian-pricing-july-2026-street-prices-verify-before-purchase-hobby-market-prices-swing-30">SECTION 6 — BILL OF MATERIALS (Indian pricing, July 2026 street prices — verify before purchase; hobby-market prices swing ±30%)<a href="#section-6-bill-of-materials-indian-pricing-july-2026-street-prices-verify-before-purchase-hobby-market-prices-swing-30" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="61-tier-m-mandatory-competition-prototype-minimum-useful-deployment">6.1 Tier M — Mandatory (competition prototype + minimum useful deployment)<a href="#61-tier-m-mandatory-competition-prototype-minimum-useful-deployment" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Unit ₹</th>
+<th>Total ₹</th>
+<th>Why this part (and what was rejected)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Arduino UNO Q (hub)</td>
+<td>1</td>
+<td>~5,000</td>
+<td>5,000</td>
+<td>Competition requirement + genuinely fits: Linux (Debian, 2 GB) for twin/AI + STM32U585 for real-time safety I/O on one board. Rejected: Pi 5 (better specs, but not Arduino — see §7.1).</td>
+</tr>
+<tr>
+<td>ESP32-C6 DevKit (leaf nodes)</td>
+<td>4</td>
+<td>550</td>
+<td>2,200</td>
+<td>Wi-Fi 6 + Thread/Zigbee + BLE on one chip = Matter-proof without re-hardware. Rejected: ESP32-WROOM (older, no Thread), ESP8266 (no crypto headroom, dead-end).</td>
+</tr>
+<tr>
+<td>ESP32-S3 DevKit N8R8 (perception node)</td>
+<td>1</td>
+<td>850</td>
+<td>850</td>
+<td>Vector instructions + 8 MB PSRAM for TinyML audio. C6 can't run meaningful audio models.</td>
+</tr>
+<tr>
+<td>SCT-013-030 CT clamp</td>
+<td>3</td>
+<td>300</td>
+<td>900</td>
+<td>Non-invasive, clamp-on = no rewiring for the demo. Rejected as sole solution: PZEM-004T (adds true kWh + voltage but needs line connection). Buy 1 PZEM too (₹700) for calibration.</td>
+</tr>
+<tr>
+<td>PZEM-004T v3</td>
+<td>1</td>
+<td>700</td>
+<td>700</td>
+<td>Reference-grade energy metering + voltage/frequency on one circuit.</td>
+</tr>
+<tr>
+<td>YF-S201 flow sensor</td>
+<td>2</td>
+<td>250</td>
+<td>500</td>
+<td>Cheap hall-effect flow. Known ±10% accuracy — fine for event detection and balance checks, not billing. Rejected: ultrasonic clamp-on flow (₹8k+, Phase 3).</td>
+</tr>
+<tr>
+<td>Motorized ball valve, ½″ 12 V (e.g., CWX-15)</td>
+<td>1</td>
+<td>1,400</td>
+<td>1,400</td>
+<td>Full-bore, low leak-pressure-drop, position feedback wires. Rejected: solenoid valve (₹400) — fails energized/hot, water-hammer, no position feedback; acceptable only for irrigation.</td>
+</tr>
+<tr>
+<td>BME280 module</td>
+<td>4</td>
+<td>300</td>
+<td>1,200</td>
+<td>T/RH/P, well-characterized, I2C. Rejected: DHT22 (slow, flaky one-wire protocol, poor RH accuracy) — the ₹150 saved isn't worth demo risk.</td>
+</tr>
+<tr>
+<td>LD2410C mmWave radar</td>
+<td>3</td>
+<td>400</td>
+<td>1,200</td>
+<td>Still-presence detection ~₹400 — the single best price/perception ratio in the whole BOM. Rejected: PIR-only (loses still humans), LD2450 (tracking, ₹900 — premium tier).</td>
+</tr>
+<tr>
+<td>PIR HC-SR501</td>
+<td>3</td>
+<td>90</td>
+<td>270</td>
+<td>Fast wake + radar cross-check.</td>
+</tr>
+<tr>
+<td>Reed contacts (door/window)</td>
+<td>6</td>
+<td>60</td>
+<td>360</td>
+<td>Boring, reliable, essential ground truth for occupancy fusion.</td>
+</tr>
+<tr>
+<td>Water leak probe pairs</td>
+<td>4</td>
+<td>80</td>
+<td>320</td>
+<td>Passive probes into leaf-node ADC.</td>
+</tr>
+<tr>
+<td>INMP441 I2S mic</td>
+<td>2</td>
+<td>280</td>
+<td>560</td>
+<td>Digital mic → clean audio into S3 TinyML. Rejected: analog MAX4466 (noise floor too high near Wi-Fi).</td>
+</tr>
+<tr>
+<td>MQ-6 (LPG) + MQ-7 (CO)</td>
+<td>1+1</td>
+<td>160</td>
+<td>320</td>
+<td>Trend/trigger sensing only — <strong>not</strong> life-safety (§16.8).</td>
+</tr>
+<tr>
+<td>AJ-SR04M waterproof ultrasonic (tank)</td>
+<td>1</td>
+<td>350</td>
+<td>350</td>
+<td>Tank level. Rejected: pressure transducer (better, ₹1.2k, premium tier).</td>
+</tr>
+<tr>
+<td>MPU6050 IMU</td>
+<td>1</td>
+<td>150</td>
+<td>150</td>
+<td>Washer/pump vibration signatures.</td>
+</tr>
+<tr>
+<td>VEML7700 lux</td>
+<td>2</td>
+<td>250</td>
+<td>500</td>
+<td>Proper lux (not LDR guesswork) for lighting loops.</td>
+</tr>
+<tr>
+<td>5 V relay boards (opto) 2ch</td>
+<td>3</td>
+<td>130</td>
+<td>390</td>
+<td>Loads &lt; 5 A. Anything bigger → contactor via electrician.</td>
+</tr>
+<tr>
+<td>SSR 25 A + heatsink (geyser/pump)</td>
+<td>1</td>
+<td>450</td>
+<td>450</td>
+<td>Silent, arc-free switching of resistive loads; must be behind thermal + RCD protection.</td>
+</tr>
+<tr>
+<td>Buzzers, LEDs, level shifters, wire, connectors</td>
+<td>—</td>
+<td>—</td>
+<td>1,500</td>
+<td>Node build-out.</td>
+</tr>
+<tr>
+<td>PSUs: 5 V/3 A ×5, 12 V/2 A ×2 (valve)</td>
+<td>7</td>
+<td>250 avg</td>
+<td>1,750</td>
+<td>One PSU per node; no daisy-chaining across rooms.</td>
+</tr>
+<tr>
+<td>Enclosures (ABS IP54 where wet) + DIN bits</td>
+<td>—</td>
+<td>—</td>
+<td>1,200</td>
+<td>§7.8.</td>
+</tr>
+<tr>
+<td><strong>Tier M total</strong></td>
+<td></td>
+<td></td>
+<td><strong>≈ ₹22,000</strong></td>
+<td>Under the &quot;mid-range phone&quot; objective.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="62-tier-r-recommended-adds-real-sensing-depth">6.2 Tier R — Recommended (adds real sensing depth)<a href="#62-tier-r-recommended-adds-real-sensing-depth" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>₹</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SCD40 true CO2</td>
+<td>2</td>
+<td>2,200 ea</td>
+<td>VOC sensors (SGP40) <em>estimate</em> CO2; SCD40 measures it (photoacoustic NDIR). Needed for credible ventilation + occupancy-slope inference. Bedroom + living room.</td>
+</tr>
+<tr>
+<td>SGP40 VOC</td>
+<td>2</td>
+<td>800 ea</td>
+<td>Cooking/chemical events, air-quality index.</td>
+</tr>
+<tr>
+<td>Motorized valve ×2 more (LPG line ½″ + garden)</td>
+<td>2</td>
+<td>1,400 ea</td>
+<td>Extends verified-shutoff to gas and irrigation.</td>
+</tr>
+<tr>
+<td>Certified standalone smoke + CO + LPG alarms</td>
+<td>3</td>
+<td>1,200 avg</td>
+<td><strong>Non-negotiable if any autonomy ships</strong> (§16.8). Listed here only because the bare competition demo can run without live gas.</td>
+</tr>
+<tr>
+<td>Capacitive soil moisture ×3, tilt sensor, more reeds/leak probes</td>
+<td>—</td>
+<td>~1,500</td>
+<td>Garden + garage coverage.</td>
+</tr>
+<tr>
+<td>UPS/battery for hub (18650 pack + BMS or mini-UPS)</td>
+<td>1</td>
+<td>2,000</td>
+<td>Hub must outlive a power cut (§16.6).</td>
+</tr>
+<tr>
+<td><strong>Tier R adds</strong></td>
+<td></td>
+<td><strong>≈ ₹15,000</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="63-tier-p-premium">6.3 Tier P — Premium<a href="#63-tier-p-premium" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>MLX90640 thermal array (₹6,500 — hotspot detection at panel: genuinely valuable, deferred for cost), LD2450 tracking radar (₹900), OV2640/S3-CAM entrance-only camera (₹1,100), pressure transducers for tank + line pressure (₹1,200 ea — line-pressure transients detect leaks <em>between</em> flow meters), Zigbee smart plugs ×4 for NILM ground-truth labelling (₹1,100 ea), 8″ wall tablet for dashboard (₹9,000). <strong>≈ ₹25,000.</strong></p>
+<h2 id="64-tier-f-future-phase-3">6.4 Tier F — Future (Phase 3+)<a href="#64-tier-f-future-phase-3" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Ultrasonic clamp-on flow, per-circuit DIN energy meters (Modbus), Thread border router, custom PCBs (§7.7), N100 mini-PC hub for multi-model AI (₹14,000), LoRa for a farm/outbuilding scenario.</p>
+<p><strong>Honest total: full-house recommended build ≈ ₹37k; with premium ≈ ₹62k.</strong> The demo needs only a ~₹15k subset of Tier M (see §25.6).</p>
+<hr />
+<h1 id="section-7-hardware-platform">SECTION 7 — HARDWARE PLATFORM<a href="#section-7-hardware-platform" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="71-hub-arduino-uno-q-the-right-call-with-eyes-open">7.1 Hub: Arduino UNO Q — the right call, with eyes open<a href="#71-hub-arduino-uno-q-the-right-call-with-eyes-open" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>The UNO Q pairs a Qualcomm Dragonwing QRB2210 (4× Cortex-A53, 2 GB LPDDR4, Debian Linux) with an STM32U585 (Cortex-M33, TrustZone) on one board. For DOMORA it is almost thematically perfect: the Linux side runs the twin/broker/DB/dashboard; the M33 side is the always-on safety micro (hardware watchdog, interlock GPIO, last-resort reflexes) that keeps working if Linux wedges.</p>
+<p>Honest limits: 2 GB RAM caps concurrent AI (fine: our models are small — §9); A53 cores are modest (no local LLM beyond tiny models; no problem — LLM is optional garnish); eMMC is small (log rotation + retention policy from day one, §12.9); the board is new, so community answers are thin — budget debugging time. Fallbacks if the hub chokes: demote UNO Q to safety-I/O + broker role and move AI to a laptop <em>on the LAN</em> (still &quot;local-first,&quot; and an acceptable demo posture if declared).</p>
+<h2 id="72-leaf-mcu-choices">7.2 Leaf MCU choices<a href="#72-leaf-mcu-choices" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>ESP32-C6</th>
+<th>ESP32-S3</th>
+<th>RP2040/2350</th>
+<th>STM32 (G0/F4)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Radio</td>
+<td>Wi-Fi 6, <strong>Thread/Zigbee</strong>, BLE5</td>
+<td>Wi-Fi 4, BLE5</td>
+<td>None (Pico W: Wi-Fi 4)</td>
+<td>None</td>
+</tr>
+<tr>
+<td>AI capability</td>
+<td>Trivial TinyML</td>
+<td><strong>Good (vector ops, PSRAM)</strong></td>
+<td>Modest</td>
+<td>Modest</td>
+</tr>
+<tr>
+<td>Crypto/secure boot</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Weak (2040) / OK (2350)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Ecosystem for this team</td>
+<td>Arduino/ESP-IDF, huge</td>
+<td>Same</td>
+<td>Good</td>
+<td>Steep</td>
+</tr>
+<tr>
+<td>Verdict</td>
+<td><strong>Default leaf node</strong></td>
+<td><strong>Perception (audio/cam) nodes</strong></td>
+<td>Rejected: radio-less or Wi-Fi-4-only; no Thread path</td>
+<td>Rejected as leaf: no radio, slower iteration. Its natural role (hard-real-time safety) is already filled by the UNO Q's STM32U585.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Decision: one firmware, two targets (C6, S3), config-driven roles.</strong> Five different MCU families (as the brief implies) means five toolchains and five OTA pipelines — a maintenance tax with zero user value.</p>
+<h2 id="73-raspberry-pi">7.3 Raspberry Pi<a href="#73-raspberry-pi" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Not in the competition build (Arduino challenge; UNO Q covers the role). In Phase 2/3, Pi 5 4 GB (~₹6.5k) or an N100 box becomes the recommended commercial hub — 2–4× the compute per rupee. The software must therefore be <strong>portable by construction</strong>: everything on the Linux side runs in containers with no UNO-Q-specific dependencies outside a thin hardware-abstraction service.</p>
+<h2 id="74-power-architecture">7.4 Power architecture<a href="#74-power-architecture" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Per-node local 5 V supply from the nearest socket (good wall-wart, not phone chargers — they brown out on Wi-Fi TX bursts; this is the #1 cause of &quot;mystery&quot; ESP32 resets). 1000 µF bulk cap across node input rails. Hub on mini-UPS (≥ 4 h). Valve/actuator 12 V rails separate from logic rails, common ground, flyback protection. Battery leaf nodes (reed/leak only) deferred: mains-powered everywhere is fine for prototype and honest about it — battery-node engineering (deep sleep, ESP-NOW, months-on-a-cell) is its own project (§25.5).</p>
+<h2 id="7579-pcb-enclosures-mechanics-3d-printing">7.5–7.9 PCB, enclosures, mechanics, 3D printing<a href="#7579-pcb-enclosures-mechanics-3d-printing" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Phase 1: no custom PCB.</strong> Dev boards + screw-terminal adapter shields + JST leads. A custom PCB before the sensor set stabilizes is money burned twice. Phase 2: one <strong>carrier PCB</strong> (C6 module + terminals + PSU + protection) reused across node types via stuffing options.</li>
+<li>Enclosures: ABS project boxes; IP54/65 for bathroom/garden/tank; cable glands; <strong>printed internal mounting trays, not printed outer enclosures</strong> for anything near mains or weather (PLA creeps and UV-degrades; PETG/ASA acceptable but bought boxes are cheaper than reliable prints at qty &lt; 100).</li>
+<li>3D printing where it shines: sensor brackets (radar aim matters — §8), CT-clamp strain reliefs, tank-probe mounts, dashboard stand, and <em>the demo house model</em> (§24) — a 2-room dollhouse rig with real plumbing loop and real loads is the best mechanical investment in the whole project.</li>
+<li>Mains discipline: anything &gt; 24 V lives in a separate, labelled, electrician-installed enclosure with contactor/RCD; DOMORA's relays switch the contactor coil, never the load directly.</li>
+</ul>
+<hr />
+<h1 id="section-8-sensor-network-design">SECTION 8 — SENSOR NETWORK DESIGN<a href="#section-8-sensor-network-design" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="81-node-taxonomy-three-node-types-not-twenty">8.1 Node taxonomy (three node types, not twenty)<a href="#81-node-taxonomy-three-node-types-not-twenty" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Node type</th>
+<th>HW</th>
+<th>Fitted sensors (stuffing options)</th>
+<th>Rooms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ENV node</strong></td>
+<td>C6</td>
+<td>BME280, radar, PIR, lux, reed ×2, leak ADC ×2, buzzer</td>
+<td>Living, bed, bath, kitchen(+MQ-6), garage(+MQ-7, tilt)</td>
+</tr>
+<tr>
+<td><strong>FLOW/POWER node</strong></td>
+<td>C6</td>
+<td>CT ×3 / PZEM, flow ×2, valve driver, SSR/relay, IMU</td>
+<td>Panel, utility, tank, garden</td>
+</tr>
+<tr>
+<td><strong>PERCEPTION node</strong></td>
+<td>S3</td>
+<td>INMP441, (opt) cam, PSRAM models</td>
+<td>Kitchen/utility shared wall; entrance (opt)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="82-placement-rules-that-decide-whether-the-data-is-usable">8.2 Placement rules that decide whether the data is usable<a href="#82-placement-rules-that-decide-whether-the-data-is-usable" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Radar (LD2410):</strong> 1.8–2.2 m height, aimed across the room's occupied zone, <strong>never at a fan or window curtain</strong> (motion false-positives) and not through the wall at the neighbour's corridor (it penetrates gypsum). Printed angled bracket = repeatable aim.</li>
+<li><strong>BME280:</strong> interior wall, 1.2–1.5 m, away from direct sun, supply-air draughts, and ≥ 30 cm from any warm electronics <em>including its own node's PSU</em> — self-heating reads +1–2 °C and silently poisons the thermal model. Probe on a 20 cm lead if boxed together.</li>
+<li><strong>MQ-6 (LPG):</strong> 30 cm above floor near the cylinder/hob (LPG is heavier than air). <strong>MQ-7 (CO):</strong> breathing height. MQ-x need 24–48 h burn-in and drift with humidity — treat as <em>trend + threshold</em> sensors, calibrate against the certified alarm's response, never as the sole safety trigger.</li>
+<li><strong>CT clamps:</strong> one conductor only (clamping the whole cable = fields cancel = zero reading — the classic first-day mistake), burden resistor at the node end, twisted-pair leads.</li>
+<li><strong>Flow (YF-S201):</strong> straight pipe run ≥ 10× diameter upstream, horizontal, arrow with flow; calibrate with a bucket + kitchen scale (₹0, ±2%).</li>
+<li><strong>Ultrasonic tank probe:</strong> centered, away from inlet turbulence; add a stilling tube (₹40 PVC pipe) — it converts a noisy ±4 cm signal into ±0.5 cm.</li>
+<li><strong>Mic:</strong> kitchen/utility shared placement hears both rooms' appliances; never in bedrooms/bathrooms (policy, not just placement).</li>
+<li><strong>Leak probes:</strong> lowest point of the drip zone (under trap, behind washer), probes 2 mm above floor to avoid condensation false alarms.</li>
+</ul>
+<h2 id="83-house-node-map">8.3 House node map<a href="#83-house-node-map" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="mermaid-wrap"><div class="mermaid">flowchart TB
+    subgraph House
+        subgraph GF[&quot;Ground floor&quot;]
+            LIV[&quot;ENV-1 Living&lt;br/&gt;radar·PIR·BME·lux·reed×2&quot;]
+            KIT[&quot;ENV-2 Kitchen&lt;br/&gt;BME·MQ-6·leak·reed&lt;br/&gt;+ PERC-1 (S3 mic)&quot;]
+            UTIL[&quot;FP-1 Utility&lt;br/&gt;CT·flow·leak·IMU·SSR&quot;]
+            GAR[&quot;ENV-3 Garage&lt;br/&gt;reed·tilt·radar·MQ-7&quot;]
+        end
+        subgraph FF[&quot;First floor&quot;]
+            BED[&quot;ENV-4 Bedroom&lt;br/&gt;radar·BME·lux·reed&quot;]
+            BATH[&quot;ENV-5 Bath&lt;br/&gt;BME(RH)·leak·flow(geyser)&quot;]
+        end
+        subgraph EXT[&quot;Exterior&quot;]
+            TANK[&quot;FP-2 Tank/Pump&lt;br/&gt;ultrasonic·CT·flow·valve&quot;]
+            GARD[&quot;FP-3 Garden&lt;br/&gt;soil×3·valve·flow&quot;]
+            PANEL[&quot;FP-4 Main panel&lt;br/&gt;PZEM·CT×3·(solar CT)&quot;]
+        end
+    end
+    HUB[&quot;UNO Q hub&lt;br/&gt;(utility room, on UPS)&quot;]
+    LIV &amp; KIT &amp; UTIL &amp; GAR &amp; BED &amp; BATH &amp; TANK &amp; GARD &amp; PANEL --&gt;|&quot;MQTT/TLS&quot;| HUB
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart TB
+    subgraph House
+        subgraph GF[&quot;Ground floor&quot;]
+            LIV[&quot;ENV-1 Living&lt;br/&gt;radar·PIR·BME·lux·reed×2&quot;]
+            KIT[&quot;ENV-2 Kitchen&lt;br/&gt;BME·MQ-6·leak·reed&lt;br/&gt;+ PERC-1 (S3 mic)&quot;]
+            UTIL[&quot;FP-1 Utility&lt;br/&gt;CT·flow·leak·IMU·SSR&quot;]
+            GAR[&quot;ENV-3 Garage&lt;br/&gt;reed·tilt·radar·MQ-7&quot;]
+        end
+        subgraph FF[&quot;First floor&quot;]
+            BED[&quot;ENV-4 Bedroom&lt;br/&gt;radar·BME·lux·reed&quot;]
+            BATH[&quot;ENV-5 Bath&lt;br/&gt;BME(RH)·leak·flow(geyser)&quot;]
+        end
+        subgraph EXT[&quot;Exterior&quot;]
+            TANK[&quot;FP-2 Tank/Pump&lt;br/&gt;ultrasonic·CT·flow·valve&quot;]
+            GARD[&quot;FP-3 Garden&lt;br/&gt;soil×3·valve·flow&quot;]
+            PANEL[&quot;FP-4 Main panel&lt;br/&gt;PZEM·CT×3·(solar CT)&quot;]
+        end
+    end
+    HUB[&quot;UNO Q hub&lt;br/&gt;(utility room, on UPS)&quot;]
+    LIV &amp; KIT &amp; UTIL &amp; GAR &amp; BED &amp; BATH &amp; TANK &amp; GARD &amp; PANEL --&gt;|&quot;MQTT/TLS&quot;| HUB
+</pre></div>
+<p><strong>Cross-validation is designed in, not accidental:</strong> panel CT vs. sum of NILM estimates (energy balance); tank level derivative vs. pump flow (water balance); radar vs. PIR vs. CO2 (occupancy). Redundancy through <em>physics closure</em>, not duplicate sensors — cheaper and it also catches sensor faults, which duplicate sensors of the same failing type do not.</p>
+<hr />
+<h1 id="section-9-edge-ai">SECTION 9 — EDGE AI<a href="#section-9-edge-ai" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="91-pipeline-placement-compute-where-the-data-is-cheap-to-move-from">9.1 Pipeline placement — compute where the data is cheap to move from<a href="#91-pipeline-placement-compute-where-the-data-is-cheap-to-move-from" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Where</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sampling, filtering, calibration</td>
+<td>Leaf MCU</td>
+<td>Raw waveforms are expensive to ship; features are cheap.</td>
+</tr>
+<tr>
+<td>Feature extraction (RMS/harmonics of current @ 1–5 Hz features; audio mel-spectrogram frames; radar presence)</td>
+<td>Leaf MCU</td>
+<td>A CT waveform at 2 kHz stays on-node; 5 features/s go to the hub.</td>
+</tr>
+<tr>
+<td>Event classification (audio events, appliance on/off edges)</td>
+<td>Leaf (S3 TinyML) / hub</td>
+<td>S3 runs a small audio CNN locally → publishes <em>events</em>, never audio. Privacy is enforced by architecture, not policy.</td>
+</tr>
+<tr>
+<td>Fusion, NILM disaggregation, anomaly scoring, forecasting</td>
+<td>Hub</td>
+<td>Needs cross-node context = the twin.</td>
+</tr>
+<tr>
+<td>Training / re-fitting</td>
+<td>Hub (nightly, small models) + laptop (heavy)</td>
+<td>2 GB hub re-fits statistical baselines fine; CNN training is offline.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="92-nilm-the-flagship-virtual-sensor">9.2 NILM (the flagship virtual sensor)<a href="#92-nilm-the-flagship-virtual-sensor" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Phase 1: <strong>event-based disaggregation</strong> — detect ΔP edges at the panel (≥ 20 W steps), cluster by (ΔP, transient shape, time-of-day) into appliance signatures, label interactively (&quot;what just turned on?&quot; — one-tap labelling in the app for the first week). This is 1980s-rooted (Hart) but <em>robust, explainable, and runs in scikit-learn on the hub</em>. Phase 3: sequence models (seq2point CNN) trained offline on the house's own labelled data. <strong>Rejected for now:</strong> deep NILM from day one — needs labelled data you don't have and GPU training you shouldn't need for a demo. Ground truth for evaluation: the Tier-P smart plugs on 4 loads for two weeks.</p>
+<h2 id="93-audio-ai">9.3 Audio AI<a href="#93-audio-ai" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>S3 node, INMP441 → 16 kHz → mel-spectrogram → small CNN (YAMNet-class distilled to &lt; 500 KB, int8, ESP-NN accelerated) for a <strong>closed set of ~10 events</strong>: alarm tones, glass break, running-water, pressure-cooker whistle, fridge/washer/mixer signatures, dog bark, doorbell. Closed-set + confidence threshold beats open-set ambition. Latency budget ~1 s. All inference on-node; the wire carries <code>{event, confidence, t}</code>.</p>
+<h2 id="94-vision-ai">9.4 Vision AI<a href="#94-vision-ai" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p><strong>Deferred to Tier P and entrance-only.</strong> The demo does not need it, privacy cost is highest, and every judge has seen a camera demo. If fitted: person-at-door detection on-device (S3 or a Grove Vision AI class module), stills only on event, nothing stored beyond 24 h, physical shutter.</p>
+<h2 id="95-sensor-fusion">9.5 Sensor fusion<a href="#95-sensor-fusion" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Occupancy: per-room Bayesian fusion (radar, PIR, CO2 slope, door events, lights/power context) with explicit hysteresis — output is <code>P(occupied)</code> + count-estimate, consumed by comfort and security. Rejected: end-to-end learned fusion (uninterpretable, undebuggable at 2 a.m. when lights turn off on grandma).</p>
+<h2 id="96-anomaly-detection">9.6 Anomaly detection<a href="#96-anomaly-detection" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Layered, cheapest first: (1) physics rules — impossible states from balance closure (§8.3); (2) statistical baselines — per-point seasonal quantile bands (hour-of-week), robust to cold start; (3) learned — small autoencoders per asset on feature vectors (washer cycle, pump run) once ≥ ~50 examples exist. Every anomaly carries evidence and a &quot;dismiss/confirm&quot; affordance whose answer becomes a label. Alert budget: the system is <em>tuned to a false-alarm budget</em> (≤ 1/week nuisance), because trust dies by alarm fatigue, not by missed detections.</p>
+<h2 id="97-predictive-maintenance-the-honest-version">9.7 Predictive maintenance — the honest version<a href="#97-predictive-maintenance-the-honest-version" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>We predict <em>degradation</em>, not <em>failure dates</em>. Trends with physical meaning: pump efficiency (L/kWh) ↓, fridge duty-cycle ↑, geyser heat-up time ↑, washer spin-phase vibration ↑, solar yield ratio ↓. Each maps to a nameable cause and a maintenance suggestion. RUL (remaining-useful-life) numbers without fleet failure data are fiction — do not put them in the UI or the pitch.</p>
+<h2 id="98-reinforcement-learning">9.8 Reinforcement learning<a href="#98-reinforcement-learning" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p><strong>Rejected for control in all phases that touch a real house.</strong> Sample inefficiency + safety + a home's non-stationarity make online RL indefensible; offline RL from logged data is a Phase-5 research topic <em>in simulation only</em> (§21). Comfort/energy trade-offs use model-predictive-style planning over the fitted thermal model — deterministic, verifiable, explainable.</p>
+<h2 id="99-federated-learning">9.9 Federated learning<a href="#99-federated-learning" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Phase 4+ only, and only for perception model improvement (audio/NILM signatures) across consenting fleets. It's a differentiator in the pitch deck, not a prototype feature — saying so signals maturity.</p>
+<h2 id="910-tinyml-toolchain">9.10 TinyML toolchain<a href="#910-tinyml-toolchain" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>TFLite-Micro (ESP-NN kernels) on S3; Edge Impulse acceptable for speed during the hackathon (their free tier + export); int8 quantize everything; model registry lives with the twin (model version = part of the digital thread, so every inference is attributable).</p>
+<h2 id="911-local-llm">9.11 Local LLM<a href="#911-local-llm" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Qwen-class 0.5–1.5 B int4 <em>might</em> run on the 2 GB hub at unusable speeds alongside everything else. Verdict: <strong>off the hub.</strong> Options in order: none (templated explanations are fine), LAN sidecar (laptop/N100 running a small model), cloud LLM <em>only</em> for non-sensitive text with explicit opt-in. The explanation engine's contract is template-first with LLM as optional upgrade.</p>
+<hr />
+<h1 id="section-10-digital-twin-visualization-software">SECTION 10 — DIGITAL TWIN VISUALIZATION SOFTWARE<a href="#section-10-digital-twin-visualization-software" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<h2 id="101-the-comparison">10.1 The comparison<a href="#101-the-comparison" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Fit</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Three.js (web)</strong></td>
+<td>Runs in any browser, served <em>from the hub</em>, no install, WebSocket live-binding, glTF house model, works on the judge's phone</td>
+<td><strong>Chosen.</strong></td>
+</tr>
+<tr>
+<td>Godot</td>
+<td>Great engine, HTML5 export heavier than needed; scene tooling overkill for a schematic house</td>
+<td>Reserve for Phase 3 &quot;walkthrough&quot; mode if ever needed</td>
+</tr>
+<tr>
+<td>Unity</td>
+<td>Licensing, heavy runtime, WebGL builds are bloated, editor lock-in; you'd demo a laptop app instead of the hub serving its own twin</td>
+<td>Rejected</td>
+</tr>
+<tr>
+<td>Unreal</td>
+<td>Photorealism nobody asked for; 100× the footprint</td>
+<td>Rejected</td>
+</tr>
+<tr>
+<td>Blender</td>
+<td>Not a runtime. Correct tool to <em>author</em> the glTF house model</td>
+<td>Authoring only</td>
+</tr>
+<tr>
+<td>ROS 2</td>
+<td>Middleware for robots; nav/TF machinery irrelevant; heavy on 2 GB</td>
+<td>Rejected (concepts borrowed, not code)</td>
+</tr>
+<tr>
+<td>Gazebo</td>
+<td>Physics sim for robots; wrong physics (we need thermal/hydraulic, not rigid-body)</td>
+<td>Rejected</td>
+</tr>
+<tr>
+<td>NVIDIA Omniverse</td>
+<td>Needs RTX-class hardware; the anti-thesis of a ₹22k local-first system</td>
+<td>Rejected (name-check in related work)</td>
+</tr>
+<tr>
+<td>Plain 2D dashboard (Grafana-class)</td>
+<td>Necessary but not sufficient — no spatial/semantic view</td>
+<td>Complementary (see §18)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Decision rationale:</strong> the dashboard must be served by the hub itself (proves local-first), load on any device instantly (judges won't install), and bind ~hundreds of state points to a schematic 3D model. That is exactly Three.js's weight class. Stylized schematic &gt; photoreal: a clean isometric house where the <em>data is the graphics</em> (heat overlays, flow particles along pipe splines, occupancy glows) reads better on a projector than any photoreal render, and honestly represents what the twin knows.</p>
+<h2 id="105-developer-layer">10.5 Developer layer<a href="#105-developer-layer" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>The MQTT topic contract + JSON schemas <em>is</em> the API; REST/WS gateway on the hub for the dashboard and third parties; node SDK = the one firmware template + a <code>node.yaml</code> (room, sensors, calibration); simulation harness = replay engine over exported history (§3.6) with a <code>virtual-node</code> binary so CI runs a whole fake house. A new sensor type must be addable by editing YAML + one driver file — that's the extensibility test.</p>
+<hr />
+<h1 id="section-11-communication-architecture">SECTION 11 — COMMUNICATION ARCHITECTURE<a href="#section-11-communication-architecture" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Role in DOMORA</th>
+<th>Why / why not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Wi-Fi (2.4 GHz) + MQTT/TLS</strong></td>
+<td><strong>Backbone, Phase 1–2</strong></td>
+<td>Zero extra hardware, every node has it, debugging tools everywhere. Weaknesses (congestion, AP dependency) mitigated: dedicated SSID/VLAN, QoS 1, per-node LWT for liveness, local reflexes for AP-down.</td>
+</tr>
+<tr>
+<td>MQTT specifics</td>
+<td>Topic scheme <code>domora/{node}/{asset}/{point}</code>; retained last-state; LWT → staleness engine; broker = Mosquitto on hub, mTLS per node</td>
+<td>Sparkplug-B considered, rejected for now: tooling weight &gt; benefit at 10 nodes; its birth/death-certificate idea is stolen via LWT + birth message.</td>
+</tr>
+<tr>
+<td><strong>Thread + Matter</strong></td>
+<td>Phase 3 product path</td>
+<td>The industry rail. C6 hardware is ready (that's <em>why</em> C6). Not for the prototype: border-router + commissioning complexity adds a week and demos identically to Wi-Fi. DOMORA-as-Matter-<em>controller</em> (bridging third-party devices) is the commercial integration strategy.</td>
+</tr>
+<tr>
+<td>BLE</td>
+<td>Commissioning (node onboarding via phone), presence beacons later</td>
+<td>Not a data plane.</td>
+</tr>
+<tr>
+<td><strong>ESP-NOW</strong></td>
+<td>Battery leaves + <strong>AP-down fallback mesh</strong></td>
+<td>Connectionless, ~1 ms, works with router dead. Design hook now (nodes fall back to ESP-NOW broadcast of safety events), implement in Phase 2.</td>
+</tr>
+<tr>
+<td>LoRa</td>
+<td>Rejected (range nobody needs inside a house; bandwidth too low) — revisit only for farm outbuildings</td>
+<td></td>
+</tr>
+<tr>
+<td>CAN</td>
+<td>Rejected: new wiring through finished walls kills retrofit economics. Right answer in <em>new construction</em> (Phase 4 builder partnerships)</td>
+<td></td>
+</tr>
+<tr>
+<td>Modbus (RTU/TCP)</td>
+<td><strong>Adopted narrowly</strong>: inverters, DIN energy meters speak it — hub-side client only</td>
+<td></td>
+</tr>
+<tr>
+<td>Hardwired GPIO interlocks</td>
+<td>Leak→valve, gas→solenoid, E-stop</td>
+<td>Safety signals never ride a radio. Copper or nothing.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mermaid-wrap"><div class="mermaid">flowchart LR
+    subgraph Nodes
+        C6a[&quot;ENV nodes&quot;] ; C6b[&quot;FLOW/POWER nodes&quot;] ; S3[&quot;PERCEPTION node&quot;]
+    end
+    subgraph Hub[&quot;UNO Q&quot;]
+        MB[&quot;Mosquitto (mTLS)&quot;] --&gt; ING[&quot;Ingest/validate&quot;]
+        MODB[&quot;Modbus client&quot;] --&gt; ING
+    end
+    C6a &amp; C6b &amp; S3 --&gt;|&quot;MQTT/TLS Wi-Fi&quot;| MB
+    INV[&quot;Solar inverter / DIN meters&quot;] --&gt; MODB
+    C6b -. &quot;hardwired interlock (leak→valve)&quot; .- VALVE[&quot;Valve&quot;]
+    Nodes -. &quot;ESP-NOW safety fallback (Phase 2)&quot; .- Nodes
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart LR
+    subgraph Nodes
+        C6a[&quot;ENV nodes&quot;] ; C6b[&quot;FLOW/POWER nodes&quot;] ; S3[&quot;PERCEPTION node&quot;]
+    end
+    subgraph Hub[&quot;UNO Q&quot;]
+        MB[&quot;Mosquitto (mTLS)&quot;] --&gt; ING[&quot;Ingest/validate&quot;]
+        MODB[&quot;Modbus client&quot;] --&gt; ING
+    end
+    C6a &amp; C6b &amp; S3 --&gt;|&quot;MQTT/TLS Wi-Fi&quot;| MB
+    INV[&quot;Solar inverter / DIN meters&quot;] --&gt; MODB
+    C6b -. &quot;hardwired interlock (leak→valve)&quot; .- VALVE[&quot;Valve&quot;]
+    Nodes -. &quot;ESP-NOW safety fallback (Phase 2)&quot; .- Nodes
+</pre></div>
+<hr />
+<h1 id="section-12-data-pipeline">SECTION 12 — DATA PIPELINE<a href="#section-12-data-pipeline" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="mermaid-wrap"><div class="mermaid">flowchart TB
+    S[&quot;Sensors (analog/digital)&quot;] --&gt; COND[&quot;Node: condition · calibrate · debounce&quot;]
+    COND --&gt; FEAT[&quot;Node: features &amp; events&lt;br/&gt;(RMS, edges, mel-frames→events)&quot;]
+    FEAT --&gt;|&quot;MQTT/TLS&quot;| VAL[&quot;Hub: validate&lt;br/&gt;(schema, range, rate, staleness)&quot;]
+    VAL --&gt; TWIN[&quot;Twin update&lt;br/&gt;(state + confidence)&quot;]
+    TWIN --&gt; INF[&quot;Inference&lt;br/&gt;(fusion · NILM · anomaly · forecast)&quot;]
+    INF --&gt; DEC[&quot;Decision plane&lt;br/&gt;(rules + planner)&quot;]
+    DEC --&gt; SAFE{&quot;Safety check&quot;}
+    SAFE --&gt;|&quot;veto&quot;| LOGV[&quot;Log + alert&quot;]
+    SAFE --&gt;|&quot;pass&quot;| ACT[&quot;Actuate (with expected effect)&quot;]
+    ACT --&gt; VER{&quot;Verify vs. independent sensor&quot;}
+    VER --&gt;|&quot;confirmed&quot;| TWIN
+    VER --&gt;|&quot;failed&quot;| ESC[&quot;Retry once → escalate&lt;br/&gt;mark asset suspect&quot;]
+    TWIN --&gt; TS[&quot;Store: time-series + events (SQLite)&quot;]
+    TS --&gt; AN[&quot;Nightly analytics&lt;br/&gt;(re-fit baselines · reports)&quot;]
+    TS --&gt; DASH[&quot;Dashboard (WS live + history)&quot;]
+    TS -.-&gt;|&quot;opt-in, encrypted, batched&quot;| CS[&quot;Cloud backup&quot;]
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart TB
+    S[&quot;Sensors (analog/digital)&quot;] --&gt; COND[&quot;Node: condition · calibrate · debounce&quot;]
+    COND --&gt; FEAT[&quot;Node: features &amp; events&lt;br/&gt;(RMS, edges, mel-frames→events)&quot;]
+    FEAT --&gt;|&quot;MQTT/TLS&quot;| VAL[&quot;Hub: validate&lt;br/&gt;(schema, range, rate, staleness)&quot;]
+    VAL --&gt; TWIN[&quot;Twin update&lt;br/&gt;(state + confidence)&quot;]
+    TWIN --&gt; INF[&quot;Inference&lt;br/&gt;(fusion · NILM · anomaly · forecast)&quot;]
+    INF --&gt; DEC[&quot;Decision plane&lt;br/&gt;(rules + planner)&quot;]
+    DEC --&gt; SAFE{&quot;Safety check&quot;}
+    SAFE --&gt;|&quot;veto&quot;| LOGV[&quot;Log + alert&quot;]
+    SAFE --&gt;|&quot;pass&quot;| ACT[&quot;Actuate (with expected effect)&quot;]
+    ACT --&gt; VER{&quot;Verify vs. independent sensor&quot;}
+    VER --&gt;|&quot;confirmed&quot;| TWIN
+    VER --&gt;|&quot;failed&quot;| ESC[&quot;Retry once → escalate&lt;br/&gt;mark asset suspect&quot;]
+    TWIN --&gt; TS[&quot;Store: time-series + events (SQLite)&quot;]
+    TS --&gt; AN[&quot;Nightly analytics&lt;br/&gt;(re-fit baselines · reports)&quot;]
+    TS --&gt; DASH[&quot;Dashboard (WS live + history)&quot;]
+    TS -.-&gt;|&quot;opt-in, encrypted, batched&quot;| CS[&quot;Cloud backup&quot;]
+</pre></div>
+<p>Stage notes beyond the diagram: <strong>validation quarantines, never drops silently</strong> (rejected readings are a sensor-health stream); every actuation record stores <code>{cause, evidence, expected, observed, outcome}</code> — this event log <em>is</em> the explainability feature and the research dataset; retention: full-rate 30 d, 1-min rollups 1 y, events forever (fits in single-digit GB — §13); cloud sync is outbound-push of encrypted archives only, and the pipeline is <em>provably</em> whole with the WAN unplugged (that's a demo beat: pull the cable mid-demo).</p>
+<hr />
+<h1 id="section-13-database">SECTION 13 — DATABASE<a href="#section-13-database" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Candidate</th>
+<th>Verdict on a 2 GB hub</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SQLite (WAL mode)</strong></td>
+<td><strong>Chosen for everything operational</strong>: time-series (one table, <code>(point_id, t, value)</code> indexed, hourly rollup tables), events, twin journal, knowledge graph (nodes/edges tables), config. Zero admin, one-file backup, survives power cuts well, 50–200 inserts/s is nothing.</td>
+</tr>
+<tr>
+<td><strong>DuckDB</strong></td>
+<td><strong>Chosen for analytics</strong>: nightly jobs and the simulation harness query Parquet exports of SQLite data. Columnar speed for scans without running a server.</td>
+</tr>
+<tr>
+<td>InfluxDB</td>
+<td>Rejected: memory-hungry TSM engine on 2 GB, another daemon, query language churn — solves scale we don't have.</td>
+</tr>
+<tr>
+<td>PostgreSQL (+Timescale)</td>
+<td>Rejected on-hub (footprint); <strong>adopted Phase 3</strong> cloud/fleet side where multi-house analytics live. Schema kept portable (plain SQL, no SQLite-isms in critical paths).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>One deliberate redundancy: the knowledge graph could live in a graph DB (Neo4j etc.) — rejected; at ~500 nodes, recursive CTEs in SQLite answer every traversal we need in &lt; 1 ms, and one storage engine means one backup/restore story.</p>
+<hr />
+<h1 id="section-14-ai-pipelines-per-domain">SECTION 14 — AI PIPELINES (per domain)<a href="#section-14-ai-pipelines-per-domain" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Pipeline</th>
+<th>Inputs</th>
+<th>Models (Phase 1 → 3)</th>
+<th>Outputs &amp; actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Energy</strong></td>
+<td>Panel CT/PZEM, solar CT, NILM events</td>
+<td>Edge-cluster NILM → seq2point; hour-of-week baselines; solar yield ratio</td>
+<td>Per-appliance ledger, waste alerts (geyser-left-on), load-shift advice → later automated shifting</td>
+</tr>
+<tr>
+<td><strong>Water</strong></td>
+<td>Flow ×N, tank level, fixture events</td>
+<td>Balance closure; event classifier (tap/shower/washer/irrigation by flow-signature); leak detectors (continuous-tiny-flow; night-flow; balance mismatch)</td>
+<td>Leak alarm + <strong>verified valve closure</strong>; usage ledger; tank forecast</td>
+</tr>
+<tr>
+<td><strong>Occupancy</strong></td>
+<td>Radar, PIR, CO2, doors, power context</td>
+<td>Bayesian fusion + hysteresis → HMM smoothing</td>
+<td><code>P(occupied)</code>, count, sleep state → comfort, security, safety context</td>
+</tr>
+<tr>
+<td><strong>Appliance health</strong></td>
+<td>CT signatures, IMU, acoustic events</td>
+<td>Per-cycle feature autoencoders + physical trend rules (§9.7)</td>
+<td>Degradation flags with evidence + suggested maintenance</td>
+</tr>
+<tr>
+<td><strong>Environmental</strong></td>
+<td>BME280 ×N, SCD40, SGP40, weather API (cached)</td>
+<td>1R1C thermal fit per room; ventilation index; mold-risk (RH×T dwell)</td>
+<td>Pre-conditioning plans, vent nudges, mold warnings</td>
+</tr>
+<tr>
+<td><strong>Acoustic</strong></td>
+<td>S3 events stream</td>
+<td>On-node CNN (closed set)</td>
+<td>Events into twin: alarm-sound → escalate; glass-break → security; whistle-counting (pressure cooker!) → kitchen context</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>Doors/windows, radar, acoustic, occupancy</td>
+<td>Rule + fused-state (entry while <code>all_away</code>), zone graph</td>
+<td>Local siren, notify; <strong>no autonomous lock/unlock in any phase without certified hardware</strong></td>
+</tr>
+<tr>
+<td><strong>Comfort</strong></td>
+<td>Thermal model, occupancy rhythms, tariffs</td>
+<td>MPC-lite over the RC model (grid-search over action schedules — it's tiny)</td>
+<td>Pre-cool/pre-heat schedules, fan curves, verified via temp trajectory</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr />
+<h1 id="section-15-automation-engine">SECTION 15 — AUTOMATION ENGINE<a href="#section-15-automation-engine" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="mermaid-wrap"><div class="mermaid">flowchart TB
+    subgraph Sources[&quot;Action sources (priority ascending)&quot;]
+        SCH[&quot;Schedules&quot;] --&gt; RUL[&quot;Rules (user + templates)&quot;] --&gt; AIP[&quot;AI planner proposals&quot;] --&gt; MAN[&quot;Manual user commands&quot;] --&gt; SFO[&quot;Safety reflexes&quot;]
+    end
+    Q[&quot;Arbiter:&lt;br/&gt;per-actuator queue · priority · conflict resolution&quot;]
+    Sources --&gt; Q
+    Q --&gt; SM[&quot;Per-asset state machines&lt;br/&gt;(legal-transition guard)&quot;]
+    SM --&gt; EXEC[&quot;Executor → expected-effect record&quot;]
+    EXEC --&gt; VERIF[&quot;Verifier&quot;]
+</div><button class="mermaid-toggle" type="button">View diagram source</button><pre class="mermaid-src">flowchart TB
+    subgraph Sources[&quot;Action sources (priority ascending)&quot;]
+        SCH[&quot;Schedules&quot;] --&gt; RUL[&quot;Rules (user + templates)&quot;] --&gt; AIP[&quot;AI planner proposals&quot;] --&gt; MAN[&quot;Manual user commands&quot;] --&gt; SFO[&quot;Safety reflexes&quot;]
+    end
+    Q[&quot;Arbiter:&lt;br/&gt;per-actuator queue · priority · conflict resolution&quot;]
+    Sources --&gt; Q
+    Q --&gt; SM[&quot;Per-asset state machines&lt;br/&gt;(legal-transition guard)&quot;]
+    SM --&gt; EXEC[&quot;Executor → expected-effect record&quot;]
+    EXEC --&gt; VERIF[&quot;Verifier&quot;]
+</pre></div>
+<p>Key decisions: <strong>single arbiter per actuator</strong> (no two subsystems ever command the same relay — the classic home-automation race condition is structurally impossible); priority strictly <code>safety &gt; manual &gt; AI &gt; rules &gt; schedule</code>, with AI proposals <em>rate-limited and reversible only</em> (AI may adjust a setpoint; only rules/safety may cut power to a circuit); conflicts resolved by priority then by explicit policy table (comfort-vs-energy weight is a user slider, not a hidden constant); every automation is a state machine with legal-transition guards, so a &quot;turn pump on&quot; request while <code>FAULT_DRY_RUN</code> is <em>unrepresentable</em>, not merely rejected; all engine decisions run through the same verify path as §4 — the engine trusts nothing it did not confirm. New rules must pass replay-simulation (§3.6) before activation.</p>
+<hr />
+<h1 id="section-16-safety-framework">SECTION 16 — SAFETY FRAMEWORK<a href="#section-16-safety-framework" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p>Numbered because auditors and judges both love numbered safety cases:</p>
+<ol>
+<li><strong>Hierarchy of protection:</strong> certified passive devices (RCD/MCB, TPR valve on geyser, certified smoke/CO/LPG alarms) → hardwired reflexes (leaf-local, copper interlocks) → hub safety plane (invariant monitor with veto) → and only then intelligence. Each layer assumes every layer above it is dead.</li>
+<li><strong>Fail-safe actuator states, chosen per asset:</strong> water main valve = motorized ball valve that <em>holds position</em> on power loss (closing on every power cut would be a denial-of-water failure; instead the hub-on-UPS decides, and the manual lever remains); LPG solenoid = <strong>normally-closed</strong> (gas fails shut, always); relays for heat-producing loads (geyser, iron circuit) = normally-open (fail off). The point: fail-safe is an <em>engineering choice per asset</em>, not a slogan.</li>
+<li><strong>Watchdogs at three scopes:</strong> node HW watchdog (reboot-to-safe-outputs), hub: STM32U585 watches the Linux side (heartbeat over internal link; on loss → hold safety GPIO states + chirp), and the twin's staleness engine watches everything (silence = event).</li>
+<li><strong>E-stop:</strong> one physical button in the utility room: all DOMORA actuators to fail-safe states, automation halted, sensing continues. Cheap, printed, judge-visible.</li>
+<li><strong>Sensor redundancy by physics closure</strong> (§8.3) plus paired independence for triggers that actuate: valve closure requires flow OR leak-probe agreement, never a single reading.</li>
+<li><strong>Power failure:</strong> hub + router on mini-UPS ≥ 4 h; nodes reboot to safe outputs and re-announce (birth message); post-restore, the twin runs a <em>reconciliation sweep</em> (re-verify every actuator's believed state) before automation resumes — stale believed-state after an outage is how automations do something stupid.</li>
+<li><strong>Fire/water/gas playbooks:</strong> deterministic, rule-only (no ML in the trigger path), each ending in a verified physical state + human notification. Fire: DOMORA <em>reacts to</em> certified alarms (cuts gas, unlocks nothing, lights path, kills specified circuits) — it is never the detector of record.</li>
+<li><strong>The MQ-x clause:</strong> hobby gas sensors are context sensors. Every deployment doc, pitch, and UI says: DOMORA supplements, never replaces, certified detectors. Saying this unprompted wins trust from any technically-literate judge.</li>
+<li><strong>AI containment:</strong> the AI cannot touch: gas valve opening (close-only), locks, garage motion, mains breakers. Enforced in the arbiter's capability table, not by convention.</li>
+<li><strong>Cybersecurity is a safety property</strong> here (an attacker who can open your gas valve is a safety failure) → §17's controls are part of the safety case.</li>
+</ol>
+<hr />
+<h1 id="section-17-cybersecurity">SECTION 17 — CYBERSECURITY<a href="#section-17-cybersecurity" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p><strong>Threat model (STRIDE-abbreviated, ranked by realistic likelihood):</strong> (1) opportunistic Wi-Fi attacker / neighbour — highest likelihood; (2) compromised phone on the home LAN; (3) malicious or hijacked cloud relay; (4) physical access to a node (nodes are in the open); (5) supply-chain/OTA compromise; (6) insider (guest/domestic help with LAN access). Assets ranked: actuator control &gt; raw audio &gt; occupancy history (burglary intel!) &gt; energy data.</p>
+<p>Controls, mapped:</p>
+<ul>
+<li><strong>Network:</strong> dedicated IoT SSID/VLAN; nodes firewalled from the LAN except broker; hub is the only bridge. mTLS on MQTT with <strong>per-node client certs</strong> (C6/S3 hardware crypto makes this cheap); broker ACLs = node can publish only its own topics, subscribe only its own commands — a stolen node's cert is a contained blast radius.</li>
+<li><strong>Zero trust posture:</strong> no implicit trust by network location; every command topic is authenticated + authorized per identity; dashboard behind hub-local auth (per-user, role-based: viewer/operator/admin); actuation API requires operator role + rate limits.</li>
+<li><strong>Secure boot &amp; storage:</strong> ESP32 Secure Boot v2 + flash encryption on production nodes (dev nodes unlocked, clearly labelled — flashing convenience vs. security is a real trade-off, resolved by fusing only at &quot;install time&quot;); secrets in NVS-encrypted partitions; UNO Q: LUKS on data partition, signed containers.</li>
+<li><strong>OTA:</strong> images signed (Ed25519), version-pinned manifest, staged rollout (one node → cohort), automatic rollback on failed post-update heartbeat; OTA server is the hub (cloud only relays blobs it cannot alter — signatures verified on-node).</li>
+<li><strong>Privacy:</strong> raw audio/video never leaves the node (architecture, §9); occupancy history is the most sensitive dataset in the system — encrypted at rest, excluded from cloud backup by default, retention user-controlled; all cloud egress opt-in, itemized, and inspectable (&quot;show me exactly what left the house this week&quot; is a UI page — and a killer differentiator line).</li>
+<li><strong>Remote access:</strong> WireGuard to the hub, no port-forwarding, no vendor cloud in the control path.</li>
+</ul>
+<hr />
+<h1 id="section-18-dashboard">SECTION 18 — DASHBOARD<a href="#section-18-dashboard" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p>Two-surface design: <strong>Twin view</strong> (Three.js isometric house — §10 — with layer toggles: thermal shading, energy flow ribbons panel→circuits→appliances, water flow along pipe splines, occupancy glows, alert badges pulsing on the offending asset) and <strong>Operations view</strong> (time-series panels, event timeline with cause→evidence→action→verification chains rendered as connected cards, prediction strip: tank-empty ETA, comfort trajectories, next planned actions with countdown + cancel). Historical playback = scrubbing the twin through stored state (the leak incident replayable at 20×; unbeatable for the demo video). Simulation tab (Phase 2+): fork &quot;now,&quot; apply a hypothetical, watch divergence. Alert design discipline: every alert shows evidence, one-tap actions, and <em>teach-the-system</em> feedback (confirm/dismiss-forever), feeding §9.6's label loop. Anti-goal, stated: no vanity 3D — if a pixel doesn't encode live state, it's clutter on a 2 GB server's bandwidth.</p>
+<h1 id="section-19-user-experience">SECTION 19 — USER EXPERIENCE<a href="#section-19-user-experience" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p>Priorities in order: <strong>(1) Invisible-by-default</strong> — the product succeeds when nobody opens the app for weeks because nothing went wrong and comfort just happened; notifications are ruthlessly budgeted (safety = push+siren; predictions = daily digest; insights = weekly). <strong>(2) Web-first PWA</strong> served by the hub (installable, push via local relay; no app-store dependency for MVP). <strong>(3) Wall/touch surface:</strong> the 8″ tablet (Tier P) or any old phone docked in the kitchen showing the ambient twin. <strong>(4) Per-node OLED (0.96″, ₹180)</strong>: tiny local truth (room temp, node status, last event) — cheap, judge-charming, and genuinely useful during install/debug. <strong>(5) Voice:</strong> deferred; local wake-word + command grammar (openWakeWord-class) is Phase 3 — cloud assistants contradict the thesis, and a flaky voice demo has sunk a thousand hackathon pitches. <strong>(6) Accessibility:</strong> dashboard WCAG AA (contrast, keyboard, screen-reader labels on state, not just charts); alerts multi-modal (visual + audio + push) benefiting deaf/blind users respectively; the automation layer itself is an accessibility feature (verified stove-off is independence for elderly users — put this in the pitch; it's true and it lands).</p>
+<h1 id="section-20-roadmap">SECTION 20 — ROADMAP<a href="#section-20-roadmap" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Scope</th>
+<th>Duration</th>
+<th>Exit criterion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1 · Competition prototype</strong></td>
+<td>§25.6 MVP: 4 nodes + hub + twin + 2 verified closed loops + dashboard + video</td>
+<td>6–8 weeks, 2–3 people</td>
+<td>Demo runs 3× consecutively without touching a keyboard</td>
+</tr>
+<tr>
+<td><strong>2 · Beta (own homes ×3–5)</strong></td>
+<td>Full Tier M+R in real houses; cold-start tooling; OTA; alert-budget tuning; ESP-NOW fallback</td>
+<td>4–6 months</td>
+<td>30 days unattended, ≤ 1 nuisance alert/week, zero safety incidents</td>
+</tr>
+<tr>
+<td><strong>3 · Commercial v1</strong></td>
+<td>Carrier PCB, installer flow, Matter controller, Pi/N100 hub, subscription cloud backup, certified-electrician install partnerships</td>
+<td>12–18 months</td>
+<td>100 paying installs, support load &lt; 1 ticket/install/month</td>
+</tr>
+<tr>
+<td><strong>4 · Enterprise/builder</strong></td>
+<td>New-construction pre-wire (CAN backbone), multi-dwelling fleet ops, insurer/service-tech APIs on the digital thread</td>
+<td>24 months+</td>
+<td>B2B pilot signed</td>
+</tr>
+<tr>
+<td><strong>5 · Research platform</strong></td>
+<td>Anonymized opt-in dataset, offline-RL sandbox, federated perception, published ontology</td>
+<td>Parallel from Phase 2</td>
+<td>First peer-reviewed publication + public dataset</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h1 id="section-21-research-landscape">SECTION 21 — RESEARCH LANDSCAPE<a href="#section-21-research-landscape" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p><strong>Caveat:</strong> knowledge cutoff January 2026; run a fresh literature sweep (Scholar/arXiv alerts on the keywords below) before writing the paper — I can do a live search pass on request. The load-bearing, verifiable anchors:</p>
+<ul>
+<li><strong>Digital twins for buildings:</strong> the DT concept traces to Grieves (2002, PLM); building-scale reviews (e.g., <em>Automation in Construction</em>, <em>Building and Environment</em>, 2020–2025) consistently find twins concentrated in commercial buildings, design/construction phases, and monitoring-only (&quot;shadow&quot;) deployments. Residential + operational + closed-loop is repeatedly named as open.</li>
+<li><strong>NILM:</strong> Hart (1992, <em>Proc. IEEE</em>) founded event-based disaggregation; Kelly &amp; Knottenbelt (2015, <em>Neural NILM</em>) opened the deep phase; NILMTK provides the standard toolkit; REDD/UK-DALE/REFIT are the canonical datasets — <strong>note: no public Indian-residential NILM dataset of note exists — collecting one is a cheap, publishable contribution.</strong></li>
+<li><strong>Occupancy sensing:</strong> rich literature on CO2-based and PIR-based estimation (reviews in <em>Building and Environment</em>); mmWave presence (post-2021, commodity 24 GHz radars) is young — fusion of commodity radar + CO2 + context in homes is under-published.</li>
+<li><strong>Building ontologies:</strong> Brick Schema (Balaji et al., 2016+), Project Haystack, RealEstateCore, W3C SSN/SOSA — all commercial-building-centric. A <strong>residential profile</strong> with plumbing/LPG/tank semantics (Indian housing patterns are absent from all of them) is a genuine gap.</li>
+<li><strong>TinyML / edge audio:</strong> YAMNet/AudioSet lineage; Warden &amp; Situnayake (<em>TinyML</em>, 2019); ESP-NN kernels make sub-MB audio CNNs practical on S3-class parts — applied home-appliance acoustic monitoring papers exist but are sparse and mostly lab-bound.</li>
+<li><strong>Predictive maintenance:</strong> mature for industrial rotating machinery (bearing datasets: CWRU, IMS); <em>residential appliance</em> degradation is nearly unstudied because nobody has the instrumented fleets — DOMORA's digital thread is exactly the missing instrument.</li>
+<li><strong>Federated learning:</strong> McMahan et al. (2017) onward; smart-home FL papers are mostly simulation-only — a real-fleet deployment (Phase 4) would be notable.</li>
+</ul>
+<p><strong>Publishable contributions, ranked by effort-to-acceptance:</strong> (1) <em>System paper</em>: edge-resident verifying residential twin on ₹22k hardware — BuildSys/e-Energy class venues; (2) <em>Dataset paper</em>: multi-modal Indian-residential dataset (power+water+environment+occupancy, anonymized) — datasets are citation magnets; (3) <em>Ontology note</em>: residential Brick profile — workshop paper; (4) <em>Method paper</em>: closed-loop actuation verification formalized (expected-effect contracts + physics-closure redundancy) — the most novel, hardest to write well.</p>
+<h1 id="section-22-patents">SECTION 22 — PATENTS<a href="#section-22-patents" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p><strong>Blunt disclaimer:</strong> nothing here is legal advice, and a real freedom-to-operate opinion needs a patent attorney with a live search — dense minefield: Google/Nest (occupancy, learning thermostats), Amazon (presence, acoustic events), Sense Labs &amp; Bidgely (NILM — heavily patented, check claims before commercializing disaggregation in the US), Flo/Moen &amp; Phyn (water-leak ML + auto-shutoff — directly adjacent to our flagship loop), Samsung/SmartThings (orchestration). Mitigations: many foundational NILM/occupancy patents are pre-2010 and expiring; India-first commercialization changes the exposure map (most cited patents are US/EU-filed); event-cluster NILM (Hart lineage) has deep prior art. <strong>Potentially patentable (novelty-check first):</strong> the expected-effect verification contract as a generalized actuation protocol; physics-closure sensor self-diagnosis in residential twins; twin-replay rule certification (simulating a new automation against recorded house history as a safety gate). File Indian provisionals early (~₹1,600–8,000 individual/startup fees) — cheap optionality before any public demo… which means <strong>before the hackathon video goes public</strong> if patenting is seriously intended.</p>
+<h1 id="section-23-competitor-analysis-condensed-swot-deltas">SECTION 23 — COMPETITOR ANALYSIS (condensed SWOT deltas)<a href="#section-23-competitor-analysis-condensed-swot-deltas" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>Their strength</th>
+<th>Their structural weakness DOMORA exploits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Google Home / Nest</td>
+<td>Distribution, voice, ecosystem</td>
+<td>Cloud-bound, device-centric, no house model, privacy skepticism</td>
+</tr>
+<tr>
+<td>Alexa</td>
+<td>Skill breadth, cheap hardware</td>
+<td>Weakest offline story, monetization pressure, no learning of the home</td>
+</tr>
+<tr>
+<td>Apple Home</td>
+<td>Privacy brand, local HomeKit</td>
+<td>Premium walled garden; no analytics/prediction ambition; India footprint small</td>
+</tr>
+<tr>
+<td>SmartThings</td>
+<td>Matter early-mover, Samsung appliances</td>
+<td>Platform churn history; rules not models</td>
+</tr>
+<tr>
+<td>Home Assistant</td>
+<td>Community, integrations, local-first credibility</td>
+<td>No twin, no learning core, hobbyist UX — <strong>partner-shaped, not enemy-shaped</strong></td>
+</tr>
+<tr>
+<td>Homey</td>
+<td>Polished local hub, multi-protocol</td>
+<td>Same rule-based ceiling; EU-priced</td>
+</tr>
+<tr>
+<td>Commercial BMS (Honeywell/Siemens/JCI)</td>
+<td>Real controls engineering, decades of HVAC</td>
+<td>Cost structure 100× residential; installer-dependent; no consumer play</td>
+</tr>
+<tr>
+<td>Industrial DT (Siemens/GE/Omniverse)</td>
+<td>Deep modeling tech</td>
+<td>Zero path to a ₹22k self-installed home product — different species</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>DOMORA's durable differentiators:</strong> the verification loop; virtual sensors (intelligence-per-rupee); local-first with provable data egress; India-relevant subsystems (tank/pump, LPG, voltage instability, solar soiling) that every US-designed competitor ignores. <strong>Main strategic risks:</strong> Matter commoditizing device control (answer: DOMORA lives above that layer), and platform giants shipping &quot;good enough&quot; cloud analytics (answer: privacy + offline + house-model depth).</p>
+<h1 id="section-24-hackathon-strategy-arduino-physical-ai-challenge">SECTION 24 — HACKATHON STRATEGY (Arduino Physical AI Challenge)<a href="#section-24-hackathon-strategy-arduino-physical-ai-challenge" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p><strong>Read the actual rubric when published; the archetype rubric is:</strong> innovation/originality ~25%, execution &amp; working demo ~25%, use of the platform (UNO Q!) ~20%, impact/relevance ~15%, documentation &amp; presentation ~15%. Strategy per line: originality = the verification loop + virtual sensors (lead with what no one else will have); execution = <strong>rehearsed, resettable physical demo</strong>; platform = make the UNO Q's dual nature (Linux twin + M33 safety) an explicit talking point — it is literally the product's architecture on one board, a gift for this specific competition; impact = water/LPG/energy in Indian homes, with numbers.</p>
+<p><strong>The demo rig:</strong> a 2-room model house (3D-printed/foam-board, ~60 cm) with a <em>real</em> water loop (aquarium pump = &quot;mains supply&quot;, clear tubing, YF-S201, motorized valve, tank with ultrasonic probe) and <em>real</em> electrical loads (12 V lamps + a small motor as &quot;appliances&quot; through CT sensing). Everything resettable in 60 seconds.</p>
+<p><strong>Demo sequence (6 minutes, 3 acts):</strong></p>
+<ol>
+<li><em>The twin is alive</em> (90 s) — dashboard beside rig; wave hand → occupancy glows; switch a load → NILM names it on screen within seconds.</li>
+<li><em>The house checks its work</em> (2 min, flagship) — open a hidden &quot;leak&quot; bypass → twin's water balance breaks → alert with evidence → valve closes <strong>on camera</strong> → flow verified to zero → then the kicker: <em>simulate a stuck valve</em> (pre-jammed second run) → verification fails → escalation alarm. Two runs, one story: <strong>act, verify, escalate</strong> — no competitor demo will show a failure being caught.</li>
+<li><em>It runs alone</em> (90 s) — pull the WAN cable theatrically; everything continues; show the &quot;data that left the house: 0 bytes&quot; screen; end on the E-stop button.</li>
+</ol>
+<p><strong>Video (3 min):</strong> 0:00 hook — &quot;Your smart home doesn't know if the valve actually closed. Ours checks.&quot;; 0:20 problem stats (water loss, LPG incidents, appliance failures); 0:45 live rig runthrough of Act 2 (real footage, no renders); 2:00 architecture in one animated diagram (the loop, the UNO Q dual-brain); 2:30 roadmap + team. <strong>Poster:</strong> the §4.1 loop diagram as the centerpiece, rig photo, three numbers (₹22k, 0 bytes egress, 100% verified actuations) — not a feature list. <strong>Pitch Q&amp;A prep:</strong> the five questions you <em>will</em> get — &quot;why not Home Assistant?&quot; (§1.5), &quot;MQ-6 isn't certified&quot; (§16.8 — answer before they finish the sentence), &quot;where's the AI?&quot; (NILM live + learned baselines + what's deliberately <em>not</em> AI and why), &quot;does it scale?&quot; (§25), &quot;cold start?&quot; (§3.4).</p>
+<h1 id="section-25-critical-review-the-adversarial-pass">SECTION 25 — CRITICAL REVIEW (the adversarial pass)<a href="#section-25-critical-review-the-adversarial-pass" class="heading-anchor" aria-label="Link to this section">#</a></h1>
+<p><strong>25.1 Weaknesses in the concept as briefed.</strong> (a) Scope pathology: 13 layers, 6 twins, 20 sensor types, 9 comparison platforms — the brief describes a platform company, and platform ambition before a working loop is the standard death of hackathon projects. (b) &quot;Predictive&quot; is overclaimed (§9.7) — judges with ML background will probe; the reframe to degradation-trending is both honest and defensible. (c) Cold start under-addressed: 2–4 weeks of learning means the <em>demo cannot rely on learned behavior</em> — hence the demo scripts around physics rules + interactive labelling, which work from minute one. (d) The install burden is the real commercial wall: 10 nodes, CT clamps in the panel, a valve in the plumbing — that's an electrician + plumber visit; the product economics live or die on install cost, not BOM (§20 Phase 3 exists for this reason). (e) Privacy claims must survive the microphone: &quot;local-only&quot; needs to be <em>demonstrable</em> (on-node inference, events-only wire — §9.3), or drop mics entirely.</p>
+<p><strong>25.2 Scalability issues.</strong> Wi-Fi at 10 nodes: fine; at 40 (large home): channel contention + consumer-router DHCP flakiness — the Thread migration path is load-bearing, not decorative. SQLite at one house: fine forever; fleet analytics: not its job (Postgres, Phase 3). The hub is a SPOF by design — acceptable <em>only because</em> of distributed reflexes (§2.1); state that trade openly. Model maintenance across a fleet of unique houses is the real unsolved scaling problem (every house is a domain shift) — this is Phase 4 R&amp;D, and honestly, it's publishable (§21).</p>
+<p><strong>25.3 Unrealistic assumptions, named.</strong> That a 2 GB board comfortably runs broker + twin + inference + DB + dashboard + TLS: <em>plausible but unproven</em> — benchmark in week 1, fallback in §7.1. That YF-S201s detect drips: they don't (&lt; 0.5 L/min is below their floor); slow-leak detection rides on tank-balance and nighttime-integration instead — the doc's leak claims are written to what the hardware can actually do. That users will label NILM events: for a week, with a fun UI, yes; forever, no — design labelling to be front-loaded. That MQ-6 survives a kitchen: expect 6–12 month replacement cycles; consumable, priced accordingly.</p>
+<p><strong>25.4 Complexity to delete now.</strong> Six-twin taxonomy → one store, six views (§3.1). Thirteen layers → five planes (§2.1). Five MCU families → two (§7.2). Graph DB, InfluxDB, ROS 2, Unity, K8s-anything, cloud AI: deleted (§10, §13). RL, federated learning, local LLM: deferred with reasons (§9.8–9.11). Voice: deferred (§19).</p>
+<p><strong>25.5 Postpone list (explicit).</strong> Cameras; battery/ESP-NOW leaf nodes; Matter; simulation UI tab; multi-user roles beyond admin/viewer; solar <em>control</em> (sense-only first); garage actuation; any lock integration (possibly forever).</p>
+<p><strong>25.6 The MVP (build exactly this).</strong> UNO Q hub + <strong>4 nodes</strong>: FLOW/POWER (panel CTs + PZEM), TANK (level + pump CT + valve + flow), ENV-living (radar/PIR/BME/lux/reed), PERCEPTION-kitchen (S3 mic, 6 audio events). Software: MQTT/TLS, twin (state+staleness+KG-lite), NILM event-clustering, water balance + leak loop, occupancy fusion, comfort read-out (no HVAC control), Three.js dashboard with playback, E-stop. <strong>Two verified closed loops</strong> (leak→valve→verify; pump dry-run→cut→verify). Nothing else. ≈ ₹15k hardware.</p>
+<p><strong>25.7 Effort estimate (3-person team, honest).</strong> Firmware + nodes: 3 wks · hub data plane + twin: 3 wks · NILM + fusion + anomalies: 3 wks · dashboard: 2 wks · rig + integration + rehearsal: 3 wks, with parallelism ⇒ <strong>7–8 calendar weeks at ~25 h/person/week</strong>. The schedule killer is integration, not features — freeze scope at week 4.</p>
+<p><strong>25.8 Risk register (top 6).</strong> UNO Q performance shortfall (M/M → benchmark wk 1, LAN-sidecar fallback); Wi-Fi flakiness during demo (H/M → travel router, own AP, offline by design); false-alarm demo embarrassment (M/H → scripted seeded faults, hysteresis, triple rehearsal); water + electronics on one rig (M/H → 12 V-only rig, drip trays, IP-rated boxes); team scope creep (H/H → §25.6 is a contract; new ideas go to a &quot;Phase 2&quot; page); MQ-6 drift mid-demo (M/L → pre-burned-in spare, demo uses butane lighter <em>unlit</em> only in ventilated space, or simulated via test signal with disclosure).</p>
+<p><strong>25.9 Publication roadmap.</strong> Month 2: workshop paper/demo abstract (system architecture) → Month 6: dataset collection running in 3 beta homes → Month 9: BuildSys/e-Energy system paper submission → Month 12: dataset paper + ontology note → Month 18: verification-method paper with beta-fleet evidence.</p>
+<hr />
+<p><em>End of specification. The next artifact this project needs is not more documentation — it is a benchmark result from a real UNO Q running Mosquitto + SQLite + the twin skeleton under synthetic load from 10 fake nodes. Build that first.</em></p>
+
+  </main>
+  <aside class="layout__minimap"><div class="minimap"><div class="minimap__label">On this page</div><ul><li><a href="#how-to-read-this-document">How to read this document</a></li>
+<li><a href="#section-1-project-overview">SECTION 1 — PROJECT OVERVIEW</a></li>
+<li><a href="#11-vision">1.1 Vision</a></li>
+<li><a href="#12-mission">1.2 Mission</a></li>
+<li><a href="#13-objectives-measurable">1.3 Objectives (measurable)</a></li>
+<li><a href="#14-innovation-and-novelty-an-honest-assessment">1.4 Innovation and novelty — an honest a</a></li>
+<li><a href="#15-comparison-with-existing-systems">1.5 Comparison with existing systems</a></li>
+<li><a href="#section-2-system-architecture">SECTION 2 — SYSTEM ARCHITECTURE</a></li>
+<li><a href="#21-architectural-philosophy-and-the-first-big-correction">2.1 Architectural philosophy and the fir</a></li>
+<li><a href="#22-the-thirteen-conceptual-layers-what-each-one-actually-is">2.2 The thirteen conceptual layers — wha</a></li>
+<li><a href="#23-end-to-end-flow-example-grounding-the-architecture">2.3 End-to-end flow example (grounding t</a></li>
+<li><a href="#section-3-digital-twin-architecture">SECTION 3 — DIGITAL TWIN ARCHITECTURE</a></li>
+<li><a href="#31-the-correction-first-one-twin-six-views-not-six-twins">3.1 The correction first: one twin, six </a></li>
+<li><a href="#32-real-time-twin-the-state-core">3.2 Real-time twin (the state core)</a></li>
+<li><a href="#33-semantic-twin-meaning">3.3 Semantic twin (meaning)</a></li>
+<li><a href="#34-behavioral-twin-learned-normal">3.4 Behavioral twin (learned normal)</a></li>
+<li><a href="#35-predictive-twin">3.5 Predictive twin</a></li>
+<li><a href="#36-simulation-twin">3.6 Simulation twin</a></li>
+<li><a href="#37-knowledge-graph">3.7 Knowledge graph</a></li>
+<li><a href="#38-virtual-sensors-the-highest-leverage-idea-in-the-project">3.8 Virtual sensors — the highest-levera</a></li>
+<li><a href="#39-digital-shadow-vs-twin-and-the-digital-thread">3.9 Digital shadow vs. twin, and the dig</a></li>
+<li><a href="#section-4-physical-ai">SECTION 4 — PHYSICAL AI</a></li>
+<li><a href="#41-the-loop">4.1 The loop</a></li>
+<li><a href="#42-how-physical-ai-differs-from-adjacent-things-the-judges-question">4.2 How Physical AI differs from adjacen</a></li>
+<li><a href="#43-where-an-llm-legitimately-fits">4.3 Where an LLM legitimately fits</a></li>
+<li><a href="#section-5-room-intelligence">SECTION 5 — ROOM INTELLIGENCE</a></li>
+<li><a href="#51-living-room-comfort-occupancy-anchor">5.1 Living Room — comfort + occupancy an</a></li>
+<li><a href="#52-kitchen-highest-event-density-highest-firegas-risk">5.2 Kitchen — highest event density, hig</a></li>
+<li><a href="#53-bedroom-quiet-intelligence-minimal-footprint">5.3 Bedroom — quiet intelligence, minima</a></li>
+<li><a href="#54-bathroom-humidity-water-falls">5.4 Bathroom — humidity, water, falls</a></li>
+<li><a href="#55-utility-room-the-machines-live-here-richest-predictive-ground">5.5 Utility Room — the machines live her</a></li>
+<li><a href="#56-garage-security-perimeter-vehicle">5.6 Garage — security perimeter + vehicl</a></li>
+<li><a href="#57-garden-water-discipline">5.7 Garden — water discipline</a></li>
+<li><a href="#58-water-tank-pump-the-flagship-subsystem-for-india">5.8 Water Tank + Pump — the flagship sub</a></li>
+<li><a href="#59-main-electrical-panel-solar-the-houses-pulse">5.9 Main Electrical Panel + Solar — the </a></li>
+<li><a href="#section-6-bill-of-materials-indian-pricing-july-2026-street-prices-verify-before-purchase-hobby-market-prices-swing-30">SECTION 6 — BILL OF MATERIALS (Indian pr</a></li>
+<li><a href="#61-tier-m-mandatory-competition-prototype-minimum-useful-deployment">6.1 Tier M — Mandatory (competition prot</a></li>
+<li><a href="#62-tier-r-recommended-adds-real-sensing-depth">6.2 Tier R — Recommended (adds real sens</a></li>
+<li><a href="#63-tier-p-premium">6.3 Tier P — Premium</a></li>
+<li><a href="#64-tier-f-future-phase-3">6.4 Tier F — Future (Phase 3+)</a></li>
+<li><a href="#section-7-hardware-platform">SECTION 7 — HARDWARE PLATFORM</a></li>
+<li><a href="#71-hub-arduino-uno-q-the-right-call-with-eyes-open">7.1 Hub: Arduino UNO Q — the right call,</a></li>
+<li><a href="#72-leaf-mcu-choices">7.2 Leaf MCU choices</a></li>
+<li><a href="#73-raspberry-pi">7.3 Raspberry Pi</a></li>
+<li><a href="#74-power-architecture">7.4 Power architecture</a></li>
+<li><a href="#7579-pcb-enclosures-mechanics-3d-printing">7.5–7.9 PCB, enclosures, mechanics, 3D p</a></li>
+<li><a href="#section-8-sensor-network-design">SECTION 8 — SENSOR NETWORK DESIGN</a></li>
+<li><a href="#81-node-taxonomy-three-node-types-not-twenty">8.1 Node taxonomy (three node types, not</a></li>
+<li><a href="#82-placement-rules-that-decide-whether-the-data-is-usable">8.2 Placement rules that decide whether </a></li>
+<li><a href="#83-house-node-map">8.3 House node map</a></li>
+<li><a href="#section-9-edge-ai">SECTION 9 — EDGE AI</a></li>
+<li><a href="#91-pipeline-placement-compute-where-the-data-is-cheap-to-move-from">9.1 Pipeline placement — compute where t</a></li>
+<li><a href="#92-nilm-the-flagship-virtual-sensor">9.2 NILM (the flagship virtual sensor)</a></li>
+<li><a href="#93-audio-ai">9.3 Audio AI</a></li>
+<li><a href="#94-vision-ai">9.4 Vision AI</a></li>
+<li><a href="#95-sensor-fusion">9.5 Sensor fusion</a></li>
+<li><a href="#96-anomaly-detection">9.6 Anomaly detection</a></li>
+<li><a href="#97-predictive-maintenance-the-honest-version">9.7 Predictive maintenance — the honest </a></li>
+<li><a href="#98-reinforcement-learning">9.8 Reinforcement learning</a></li>
+<li><a href="#99-federated-learning">9.9 Federated learning</a></li>
+<li><a href="#910-tinyml-toolchain">9.10 TinyML toolchain</a></li>
+<li><a href="#911-local-llm">9.11 Local LLM</a></li>
+<li><a href="#section-10-digital-twin-visualization-software">SECTION 10 — DIGITAL TWIN VISUALIZATION </a></li>
+<li><a href="#101-the-comparison">10.1 The comparison</a></li>
+<li><a href="#105-developer-layer">10.5 Developer layer</a></li>
+<li><a href="#section-11-communication-architecture">SECTION 11 — COMMUNICATION ARCHITECTURE</a></li>
+<li><a href="#section-12-data-pipeline">SECTION 12 — DATA PIPELINE</a></li>
+<li><a href="#section-13-database">SECTION 13 — DATABASE</a></li>
+<li><a href="#section-14-ai-pipelines-per-domain">SECTION 14 — AI PIPELINES (per domain)</a></li>
+<li><a href="#section-15-automation-engine">SECTION 15 — AUTOMATION ENGINE</a></li>
+<li><a href="#section-16-safety-framework">SECTION 16 — SAFETY FRAMEWORK</a></li>
+<li><a href="#section-17-cybersecurity">SECTION 17 — CYBERSECURITY</a></li>
+<li><a href="#section-18-dashboard">SECTION 18 — DASHBOARD</a></li>
+<li><a href="#section-19-user-experience">SECTION 19 — USER EXPERIENCE</a></li>
+<li><a href="#section-20-roadmap">SECTION 20 — ROADMAP</a></li>
+<li><a href="#section-21-research-landscape">SECTION 21 — RESEARCH LANDSCAPE</a></li>
+<li><a href="#section-22-patents">SECTION 22 — PATENTS</a></li>
+<li><a href="#section-23-competitor-analysis-condensed-swot-deltas">SECTION 23 — COMPETITOR ANALYSIS (conden</a></li>
+<li><a href="#section-24-hackathon-strategy-arduino-physical-ai-challenge">SECTION 24 — HACKATHON STRATEGY (Arduino</a></li>
+<li><a href="#section-25-critical-review-the-adversarial-pass">SECTION 25 — CRITICAL REVIEW (the advers</a></li></ul></div></aside>
+</div>
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="vendor/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}} · DOMORA Docs</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle navigation" title="Menu">&#9776;</button>
+  <nav class="topbar__nav">{{NAV}}</nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+<div class="layout">
+  <aside class="layout__sidebar sidebar">
+    <div class="search-box">
+      <input type="text" id="doc-search" data-base="" placeholder="Search docs&hellip; (press /)" autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    {{TOC}}
+  </aside>
+  <main class="doc" id="top">
+    <div class="doc-header">
+      <div class="doc-eyebrow"><span>{{ICON}}</span> Documentation</div>
+      <h1 class="doc-title">{{TITLE}}</h1>
+      <p class="doc-desc">{{DESCRIPTION}}</p>
+      <div class="doc-meta"><span>&#128214; {{WORDS}} words</span><span>&#128196; docs/{{SRC}}</span></div>
+    </div>
+    {{BODY}}
+  </main>
+  <aside class="layout__minimap">{{MINIMAP}}</aside>
+</div>
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="vendor/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

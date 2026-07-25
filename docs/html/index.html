@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOMORA Docs</title>
+<meta name="description" content="DOMORA — Digital Operating Model for Residential Awareness. Documentation home.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <nav class="topbar__nav"><a href="index.html" class="active">Home</a>
+<a href="spec.html">Engineering Specification</a>
+<a href="app-plan.html">App Build Plan</a>
+<a href="bom-order.html">Bill of Materials</a>
+<a href="agents.html">Agent Instructions</a></nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+
+<section class="hero">
+  <img src="assets/icon.png" alt="DOMORA app icon">
+  <h1>DOMORA Documentation</h1>
+  <p>Digital Operating Model for Residential Awareness &mdash; a house that observes, understands,
+     predicts, plans, acts, and verifies its own actions, running local-first on real hardware.
+     Four documents, one system: the spec, the app plan, the parts list, and the working rules.</p>
+  <div class="badges">
+    <span class="badge">Local-first</span>
+    <span class="badge">Closed-loop verification</span>
+    <span class="badge">Solo 8-week build</span>
+    <span class="badge">Real UNO Q hardware</span>
+  </div>
+</section>
+
+<div class="search-box" style="max-width:520px;margin:0 auto 48px;padding:0 24px;">
+  <input type="text" id="doc-search" data-base="" placeholder="Search all docs&hellip; (press /)" autocomplete="off" style="width:100%;">
+  <div class="search-results" id="search-results"></div>
+</div>
+
+<div class="card-grid">
+<div class="doc-card">
+  <a class="stretched" href="spec.html" aria-label="Open Engineering Specification"></a>
+  <span class="doc-card__icon">🏛️</span>
+  <h3>Engineering Specification</h3>
+  <p>The full system design: architecture, hardware tiers, safety framework, cybersecurity, and the adversarial self-review.</p>
+  <div class="doc-card__meta"><span>11,810 words</span><span>82 sections</span></div>
+  <span class="doc-card__cta">Read <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="doc-card">
+  <a class="stretched" href="app-plan.html" aria-label="Open App Build Plan"></a>
+  <span class="doc-card__icon">📱</span>
+  <h3>App Build Plan</h3>
+  <p>How DOMORA Studio (web) and DOMORA Mobile (Flutter) got built — phased, each phase verified against the real running hub before the next started.</p>
+  <div class="doc-card__meta"><span>3,402 words</span><span>20 sections</span></div>
+  <span class="doc-card__cta">Read <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="doc-card">
+  <a class="stretched" href="bom-order.html" aria-label="Open Bill of Materials"></a>
+  <span class="doc-card__icon">🧾</span>
+  <h3>Bill of Materials</h3>
+  <p>The real parts list for the competition build — what was ordered, why, and what got rejected along the way.</p>
+  <div class="doc-card__meta"><span>570 words</span><span>9 sections</span></div>
+  <span class="doc-card__cta">Read <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<div class="doc-card">
+  <a class="stretched" href="agents.html" aria-label="Open Agent Instructions"></a>
+  <span class="doc-card__icon">🤖</span>
+  <h3>Agent Instructions</h3>
+  <p>Working rules for any AI-assisted session on this repo: the loop, the hard rules, and the checklist before ending a turn.</p>
+  <div class="doc-card__meta"><span>391 words</span><span>2 sections</span></div>
+  <span class="doc-card__cta">Read <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+</div>
+
+<div class="landing-footer">
+  Generated from <code>docs/*.md</code> by <code>tools/build_docs_html.py</code> &mdash; the Markdown stays the source of truth.
+</div>
+
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="assets/app.js"></script>
+</body>
+</html>

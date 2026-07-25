@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Instructions · DOMORA Docs</title>
+<meta name="description" content="Working rules for any AI-assisted session on this repo: the loop, the hard rules, and the checklist before ending a turn.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="progress-rail"><div class="progress-rail__bar"></div></div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html"><img src="assets/icon.png" alt="DOMORA"><span>DOMORA<br><small>Docs</small></span></a>
+  <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle navigation" title="Menu">&#9776;</button>
+  <nav class="topbar__nav"><a href="index.html">Home</a>
+<a href="spec.html">Engineering Specification</a>
+<a href="app-plan.html">App Build Plan</a>
+<a href="bom-order.html">Bill of Materials</a>
+<a href="agents.html" class="active">Agent Instructions</a></nav>
+  <div class="topbar__spacer"></div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">&#9681;</button>
+</header>
+<div class="layout">
+  <aside class="layout__sidebar sidebar">
+    <div class="search-box">
+      <input type="text" id="doc-search" data-base="" placeholder="Search docs&hellip; (press /)" autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <ul class="toc">
+<li class="lvl-2"><a href="#contracts">Contracts</a></li>
+<li class="lvl-2"><a href="#adding-a-new-behavior-the-checklist">Adding a new behavior (the checklist)</a></li>
+</ul>
+  </aside>
+  <main class="doc" id="top">
+    <div class="doc-header">
+      <div class="doc-eyebrow"><span>🤖</span> Documentation</div>
+      <h1 class="doc-title">Agent Instructions</h1>
+      <p class="doc-desc">Working rules for any AI-assisted session on this repo: the loop, the hard rules, and the checklist before ending a turn.</p>
+      <div class="doc-meta"><span>&#128214; 391 words</span><span>&#128196; docs/AGENTS.md</span></div>
+    </div>
+    <p>Each agent owns one cognitive responsibility, the same discipline an agentic
+AI assistant applies to software work, mapped onto a physical house:</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Assistant behavior</th>
+<th>DOMORA agent</th>
+<th>The rule it enforces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read before you write; never act on assumption</td>
+<td><code>observer</code></td>
+<td>No reading enters the twin unvalidated; rejects are quarantined loudly and become sensor-health signals</td>
+</tr>
+<tr>
+<td>Think: turn raw data into meaning, with stated confidence</td>
+<td><code>understander</code></td>
+<td>Fusion + physics closure. It writes <em>conclusions with confidence</em>, e.g. <code>house.occupied (0.95)</code> — never raw guesses</td>
+</tr>
+<tr>
+<td>Look ahead before committing</td>
+<td><code>predictor</code></td>
+<td>Rolls the model forward (&quot;tank empty in ~N&quot;), so the planner can pre-act instead of react</td>
+</tr>
+<tr>
+<td>Plan with success criteria declared up front</td>
+<td><code>planner</code></td>
+<td>Every action carries cause, evidence, and a falsifiable <strong>Expectation</strong> with a deadline — the definition of done, written before doing</td>
+</tr>
+<tr>
+<td>Respect hard limits; some actions are never yours to take</td>
+<td><code>safety</code></td>
+<td>Capability table + invariants, deliberately ML-free. <code>gas_valve:open</code> isn't refused — it's unrepresentable</td>
+</tr>
+<tr>
+<td>Act through narrow, auditable interfaces</td>
+<td><code>actor</code></td>
+<td>The only code path to actuators; one arbiter per device; journals before dispatch</td>
+</tr>
+<tr>
+<td>Verify the outcome; never claim unverified success</td>
+<td><code>verifier</code></td>
+<td>Confirms via an <em>independent</em> sensor, retries exactly once, then fails honestly</td>
+</tr>
+<tr>
+<td>Escalate clearly when blocked, with evidence</td>
+<td><code>verifier</code></td>
+<td>Failure = critical alert + asset marked <code>suspect</code> + the full expected-vs-observed record</td>
+</tr>
+<tr>
+<td>Learn from feedback</td>
+<td>(Phase 2) <code>learner</code></td>
+<td>Nightly baseline re-fits; user confirm/dismiss on alerts becomes labels</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="contracts">Contracts<a href="#contracts" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Agents <strong>never call each other</strong> — bus + twin only. Any agent can be
+replaced, tested, or run standalone.</li>
+<li>Every message an agent emits is <strong>narrated</strong> with its tick and name; the
+narration log <em>is</em> the explainability feature and the demo script.</li>
+<li>An agent that has nothing true to say says nothing (alert budget: trust
+dies by alarm fatigue, not missed detections).</li>
+</ul>
+<h2 id="adding-a-new-behavior-the-checklist">Adding a new behavior (the checklist)<a href="#adding-a-new-behavior-the-checklist" class="heading-anchor" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>New sensing? Extend <code>sim/virtual_house.py</code> first — behavior lands in
+simulation before hardware, always.</li>
+<li>New meaning? Add a virtual sensor in <code>hub/twin/virtual_sensors.py</code> that
+writes evidence, not just a boolean.</li>
+<li>New action? Add the <code>(asset, command)</code> pair to the safety capability
+table <strong>only if</strong> the planner should ever do it autonomously, and give the
+action a real Expectation — if you cannot name the sensor that will verify
+it, the action is not ready to be autonomous.</li>
+<li>Add a scenario test in <code>tests/</code> covering both the success <em>and</em> the
+failure path. The stuck-valve test is the template.</li>
+</ol>
+
+  </main>
+  <aside class="layout__minimap"><div class="minimap"><div class="minimap__label">On this page</div><ul><li><a href="#contracts">Contracts</a></li>
+<li><a href="#adding-a-new-behavior-the-checklist">Adding a new behavior (the checklist)</a></li></ul></div></aside>
+</div>
+<button class="to-top" aria-label="Back to top" title="Back to top">&#8593;</button>
+<script src="vendor/mermaid.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
