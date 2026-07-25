@@ -1,0 +1,5 @@
+/* Energy dashboard — Phase 3. Reuses .vitals-rail from home.css and the
+   shared chart primitives in ui/charts.css. */
+
+.energy-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+.chart-note { margin-top: var(--sp-2); font: var(--fs-11) var(--font-ui); color: var(--ink-faint); }

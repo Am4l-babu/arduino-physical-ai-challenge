@@ -1,0 +1,8 @@
+/* Appliance detail page — Phase 4. Reuses .not-connected-list/.nc-dot/
+   .nc-note from security.css and .vitals-rail from home.css. */
+
+.appliance-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+.appliance-header { display: flex; flex-direction: column; gap: var(--sp-1); }
+.appliance-title { font: 700 var(--fs-24) var(--font-ui); margin: 0; text-transform: capitalize; }
+.appliance-sub { font: var(--fs-13) var(--font-mono); color: var(--ink-faint); }
+.appliance-note { font: var(--fs-13) var(--font-ui); color: var(--ink-dim); line-height: 1.5; margin: var(--sp-2) 0 0; }

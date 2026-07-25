@@ -119,7 +119,10 @@ class JournalReader:
 
     def __init__(self, path) -> None:
         self.path = Path(path)
-        self.db = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True)
+        # check_same_thread=False: read-only connection, no writes/transactions
+        # ever span threads — needed because DashboardServer (ThreadingHTTPServer)
+        # opens this once but queries it from whichever thread handles a request.
+        self.db = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True, check_same_thread=False)
 
     def timeline(self) -> list:
         frames = []

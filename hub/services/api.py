@@ -22,14 +22,36 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from hub.agents.base import Action, Expectation
+from hub.services.ai_query import AIQuery
 from hub.twin.state import Point
 
 _WS_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 _DASHBOARD = Path(__file__).resolve().parent.parent.parent / "dashboard" / "index.html"
+_STUDIO_DIR = (Path(__file__).resolve().parent.parent.parent / "studio").resolve()
 
 HISTORY_LIMIT = 500
+
+_STUDIO_CONTENT_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+}
+
+
+def _studio_file(rel_path: str):
+    """Resolve a /studio/... request under studio/, refusing path-traversal escapes."""
+    rel = rel_path.lstrip("/") or "index.html"
+    candidate = (_STUDIO_DIR / rel).resolve()
+    try:
+        candidate.relative_to(_STUDIO_DIR)
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
 
 
 # --- JSON serialization of hub objects ------------------------------------
@@ -104,22 +126,27 @@ class DashboardServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-    def __init__(self, bus, twin, host="0.0.0.0", port=8080, journal_path=None):
+    def __init__(self, bus, twin, host="0.0.0.0", port=8080, journal_path=None, energy=None, graph=None):
         super().__init__((host, port), _Handler)
         self.bus = bus
         self.twin = twin
+        self.energy = energy  # hub.agents.energy.EnergySense, for DOMORA AI's power intent
+        self.graph = graph    # hub.twin.graph.KnowledgeGraph, for GET /graph (Studio's Settings page)
         self._clients = set()
         self._clients_lock = threading.Lock()
         self._history = []
         self._history_lock = threading.Lock()
 
+        # Kept open (not just used to build the playback blob) so DOMORA AI
+        # can answer journal-backed questions (water usage, "while away")
+        # against a recorded run in --playback mode.
+        self.journal = None
         self.playback = None
         if journal_path is not None:
             from hub.services.store import JournalReader
-            reader = JournalReader(journal_path)
-            self.playback = dumps({"timeline": reader.timeline(),
-                                   "t_max": reader.t_max()}).encode("utf-8")
-            reader.close()
+            self.journal = JournalReader(journal_path)
+            self.playback = dumps({"timeline": self.journal.timeline(),
+                                   "t_max": self.journal.t_max()}).encode("utf-8")
 
         bus.subscribe("#", self._on_event)
         prior = twin.on_set
@@ -250,8 +277,98 @@ class _Handler(BaseHTTPRequestHandler):
                 self.send_error(404)
             else:
                 self._serve_bytes(self.server.playback, "application/json")
+        elif self.path.split("?")[0] == "/studio" or self.path.split("?")[0].startswith("/studio/"):
+            self._serve_studio()
+        elif self.path.split("?")[0] == "/history":
+            self._serve_history()
+        elif self.path.split("?")[0] == "/nilm":
+            self._serve_nilm()
+        elif self.path.split("?")[0] == "/graph":
+            self._serve_graph()
         else:
             self.send_error(404)
+
+    def _serve_graph(self):
+        # The real house knowledge graph (hub/config/house.json via
+        # hub.twin.graph.KnowledgeGraph) — what Studio's Settings page shows
+        # as rooms/nodes. Not a separate config file the UI reads directly:
+        # this way it always reflects whatever graph the live world actually
+        # loaded, the same one the planner reasons over.
+        if self.server.graph is None:
+            self.send_error(404)
+            return
+        graph = self.server.graph
+        self._serve_bytes(
+            dumps({"assets": list(graph.assets.values()), "edges": graph.edges}).encode("utf-8"),
+            "application/json",
+        )
+
+    def _serve_nilm(self):
+        # The authoritative NILM ledger — hub/agents/energy.py's own
+        # clusters/energy_wh dicts, the same ground truth tests/test_nilm.py
+        # and hub/services/ai_query.py's power intent already trust. Not
+        # reconstructed from twin points client-side (see studio/core/twin.js
+        # for why that's unsound: a relabelled cluster's old points never
+        # retire, so point-scanning can double-count or drop appliances).
+        if self.server.energy is None:
+            self.send_error(404)
+            return
+        self._serve_bytes(dumps(self.server.energy.report()).encode("utf-8"), "application/json")
+
+    def _serve_history(self):
+        # Journal-backed point history — only available in --playback mode
+        # (self.server.journal is a live JournalReader there). Studio's
+        # charts fall back to their own client-side session buffer when
+        # this 404s, rather than pretending multi-day history exists.
+        if self.server.journal is None:
+            self.send_error(404)
+            return
+        query = parse_qs(urlsplit(self.path).query)
+        key = (query.get("key") or [None])[0]
+        if not key:
+            self.send_error(400)
+            return
+        try:
+            limit = int((query.get("limit") or ["500"])[0])
+        except ValueError:
+            self.send_error(400)
+            return
+        rows = self.server.journal.db.execute(
+            "SELECT t, value FROM points_journal WHERE key=? ORDER BY t", (key,)
+        ).fetchall()
+        points = [[t, json.loads(v)] for t, v in rows[-limit:]]
+        self._serve_bytes(dumps({"key": key, "points": points}).encode("utf-8"), "application/json")
+
+    def _serve_studio(self):
+        rel = self.path.split("?")[0][len("/studio"):]
+        path = _studio_file(rel)
+        if path is None:
+            self.send_error(404)
+            return
+        ctype = _STUDIO_CONTENT_TYPES.get(path.suffix, "application/octet-stream")
+        self._serve_file(path, ctype)
+
+    def do_POST(self):
+        if self.path.split("?")[0] == "/ai":
+            self._serve_ai()
+        else:
+            self.send_error(404)
+
+    def _serve_ai(self):
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            message = json.loads(raw.decode("utf-8")).get("message", "")
+        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+            self.send_error(400)
+            return
+        answer = AIQuery(self.server.twin, energy=self.server.energy,
+                         journal=self.server.journal).ask(message)
+        self._serve_bytes(
+            dumps({"text": answer.text, "evidence": answer.evidence, "intent": answer.intent})
+            .encode("utf-8"),
+            "application/json",
+        )
 
     def _serve_file(self, path: Path, ctype: str):
         try:
@@ -319,7 +436,8 @@ def serve(scenario: str = "stuck", host: str = "0.0.0.0", port: int = 8080,
         print(f"[t={t:03d}] {agent:<12} | {message}")
 
     world = wire(scenario, narrate)
-    server = DashboardServer(world.bus, world.twin, host=host, port=port)
+    server = DashboardServer(world.bus, world.twin, host=host, port=port,
+                             energy=world.energy, graph=world.graph)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     print(f"--- DOMORA dashboard on http://localhost:{server.port}  (scenario: {scenario}) ---")
 
@@ -335,6 +453,8 @@ def serve(scenario: str = "stuck", host: str = "0.0.0.0", port: int = 8080,
             world = wire(scenario, narrate)
             server.bus = world.bus   # re-tap the fresh world
             server.twin = world.twin
+            server.energy = world.energy
+            server.graph = world.graph
             world.bus.subscribe("#", server._on_event)
             prior = world.twin.on_set
             def _hook(key, p, prior=prior):

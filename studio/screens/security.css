@@ -1,0 +1,26 @@
+/* Security dashboard — Phase 3. */
+
+.security-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+.occ-row { display: flex; align-items: center; gap: var(--sp-3); }
+.occ-detail { font: var(--fs-12) var(--font-mono); color: var(--ink-faint); }
+
+.alert-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.alert-row {
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--st-crit) 8%, transparent); border: 1px solid var(--st-crit-glow);
+  font-size: var(--fs-13);
+}
+.alert-t { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--ink-faint); }
+.alert-topic { font-family: var(--font-mono); font-size: var(--fs-12); color: var(--ink); }
+.alert-reason { color: var(--ink-dim); }
+
+.not-connected-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.not-connected-row {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-1);
+  background: var(--bg-2); border: 1px dashed var(--line-strong); color: var(--ink-faint);
+  font-size: var(--fs-13);
+}
+.nc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); flex-shrink: 0; }
+.nc-note { margin-left: auto; font-size: var(--fs-11); font-style: italic; }

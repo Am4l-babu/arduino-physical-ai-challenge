@@ -1,0 +1,11 @@
+/* Sensor detail page — Phase 4. Reuses .vitals-rail (home.css) and
+   .chart-note (energy.css). */
+
+.sensor-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+.sensor-header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.sensor-title { font: 700 var(--fs-18) var(--font-mono); margin: 0; word-break: break-word; }
+
+.sensor-table { width: 100%; border-collapse: collapse; font: var(--fs-13) var(--font-mono); }
+.sensor-table th { text-align: left; color: var(--ink-faint); font-size: var(--fs-11); text-transform: uppercase; letter-spacing: 0.05em; padding: var(--sp-1) var(--sp-2); }
+.sensor-table td { padding: var(--sp-1) var(--sp-2); border-top: 1px solid var(--line); color: var(--ink-dim); }
+.sensor-table tr:first-child td { color: var(--ink); font-weight: 600; }

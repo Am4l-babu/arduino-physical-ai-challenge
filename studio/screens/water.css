@@ -1,0 +1,17 @@
+/* Water dashboard — Phase 3. */
+
+.water-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+.water-status-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+.grid.two-col { grid-template-columns: 1fr 1fr; }
+@media (max-width: 860px) { .grid.two-col { grid-template-columns: 1fr; } }
+
+.incident-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.incident-row { padding: var(--sp-3); border-radius: var(--r-1); background: var(--bg-2); border: 1px solid var(--line); }
+.incident-head { display: flex; align-items: center; gap: var(--sp-2); }
+.incident-cause { font: 600 var(--fs-13) var(--font-ui); color: var(--ink); flex: 1; }
+.incident-detail {
+  margin-top: var(--sp-2); display: flex; flex-wrap: wrap; gap: var(--sp-3);
+  font: var(--fs-12) var(--font-mono); color: var(--ink-dim);
+}
+.incident-reason { color: var(--st-crit); }

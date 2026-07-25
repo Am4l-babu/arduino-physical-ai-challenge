@@ -1,0 +1,6 @@
+{
+  "name": "domora-studio",
+  "private": true,
+  "type": "module",
+  "description": "No build step, no bundler, no dependencies. This file exists only so Node-based verification scripts (and any future editor tooling) resolve these .js files as ES modules — it has no effect on the browser, which is served the files as-is."
+}

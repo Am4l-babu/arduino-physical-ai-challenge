@@ -1,0 +1,37 @@
+/* Global command bar (⌘K). */
+
+.cmdbar-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(6, 7, 10, 0.55); backdrop-filter: blur(4px);
+  display: none; align-items: flex-start; justify-content: center;
+  padding-top: 12vh;
+}
+.cmdbar-overlay.on { display: flex; }
+
+.cmdbar-panel {
+  width: min(560px, 92vw); max-height: 60vh; display: flex; flex-direction: column;
+  border-radius: var(--r-3); box-shadow: var(--shadow-3); overflow: hidden;
+}
+.cmdbar-input {
+  border: none; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink);
+  font: var(--fs-15) var(--font-ui); padding: var(--sp-4); outline: none;
+}
+.cmdbar-input::placeholder { color: var(--ink-faint); }
+.cmdbar-results { overflow-y: auto; padding: var(--sp-2); }
+.cmdbar-row {
+  display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1); cursor: pointer; transition: background var(--dur-2) var(--ease);
+}
+.cmdbar-row:hover { background: var(--line); }
+.cmdbar-hint {
+  font: 600 var(--fs-11) var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--ink-faint); min-width: 44px;
+}
+.cmdbar-label { font: var(--fs-13) var(--font-mono); color: var(--ink); word-break: break-word; }
+
+.cmdbar-trigger {
+  font: 600 var(--fs-12) var(--font-mono); color: var(--ink-faint);
+  background: var(--line); border: 1px solid var(--line-strong); border-radius: var(--r-pill);
+  padding: 3px var(--sp-2); cursor: pointer;
+}
+.cmdbar-trigger:hover { color: var(--ink); }

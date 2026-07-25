@@ -1,0 +1,22 @@
+/* Room detail page — Phase 4. Reuses .incident-list/.incident-row (water.css),
+   .water-status-row (water.css), .chip/.health-dot (base.css). */
+
+.room-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.room-header { display: flex; align-items: center; gap: var(--sp-3); }
+.room-title { font: 700 var(--fs-24) var(--font-ui); margin: 0; }
+.room-detail { font: var(--fs-13) var(--font-mono); color: var(--ink-faint); text-transform: capitalize; }
+.room-mini { font: var(--fs-12) var(--font-mono); color: var(--ink-faint); }
+.room-power { font: 700 var(--fs-40) var(--font-mono); color: var(--ink); }
+
+.sensor-list { display: flex; flex-direction: column; }
+.sensor-row {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-1); border-bottom: 1px solid var(--line);
+  cursor: pointer; transition: background var(--dur-2) var(--ease);
+}
+.sensor-row:last-child { border-bottom: none; }
+.sensor-row:hover { background: var(--line); }
+.sensor-key { font: var(--fs-13) var(--font-mono); color: var(--ink-dim); flex: 1; }
+.sensor-value { font: 600 var(--fs-13) var(--font-mono); color: var(--ink); }
+.sensor-arrow { color: var(--ink-faint); }

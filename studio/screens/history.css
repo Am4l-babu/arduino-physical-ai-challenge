@@ -1,0 +1,11 @@
+/* History — Phase 5. Reuses .incident-list/.incident-row (water.css) and
+   .sensor-table (sensor.css). */
+
+.history-screen { display: flex; flex-direction: column; gap: var(--sp-4); }
+.history-controls { display: flex; align-items: center; gap: var(--sp-3); }
+.history-play {
+  border: none; border-radius: var(--r-pill); padding: var(--sp-2) var(--sp-3);
+  background: var(--accent); color: var(--accent-ink); font: 600 var(--fs-13) var(--font-ui); cursor: pointer;
+}
+.history-range { flex: 1; accent-color: var(--accent); }
+.history-t { font: var(--fs-12) var(--font-mono); color: var(--ink-faint); min-width: 110px; text-align: right; }

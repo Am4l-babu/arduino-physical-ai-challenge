@@ -1,0 +1,61 @@
+/* DOMORA AI — Phase 2 chat screen styles. */
+
+.ai-screen { display: flex; flex-direction: column; gap: var(--sp-4); height: calc(100vh - 160px); min-height: 420px; }
+
+.ai-log {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sp-3);
+}
+
+.bubble { max-width: 78%; display: flex; flex-direction: column; gap: var(--sp-2); }
+.bubble.user { align-self: flex-end; align-items: flex-end; }
+.bubble.assistant { align-self: flex-start; align-items: flex-start; }
+
+.bubble-text {
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--r-2); font: var(--fs-15) var(--font-ui);
+  line-height: 1.5;
+}
+.bubble.user .bubble-text { background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: var(--r-1); }
+.bubble.assistant .bubble-text {
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--ink);
+  border-bottom-left-radius: var(--r-1);
+}
+
+.evidence {
+  display: flex; flex-direction: column; gap: 2px; padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-1);
+  font-family: var(--font-mono); font-size: var(--fs-12); width: 100%;
+}
+.evidence-row { display: flex; justify-content: space-between; gap: var(--sp-3); }
+.evidence-row .k { color: var(--ink-faint); }
+.evidence-row .v { color: var(--ink-dim); text-align: right; word-break: break-word; }
+
+.ai-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.ai-chip {
+  border: 1px solid var(--line); background: var(--bg-2); cursor: pointer;
+  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+.ai-chip:hover { background: var(--line); border-color: var(--line-strong); }
+
+.ai-input-row {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2); border-radius: var(--r-2);
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+}
+.ai-input-row input {
+  flex: 1; border: none; background: transparent; color: var(--ink);
+  font: var(--fs-15) var(--font-ui); padding: var(--sp-2) var(--sp-1); outline: none;
+}
+.ai-input-row input::placeholder { color: var(--ink-faint); }
+.mic-btn, .send-btn {
+  border: none; border-radius: var(--r-pill); padding: var(--sp-2) var(--sp-3);
+  font: 600 var(--fs-13) var(--font-ui);
+}
+.mic-btn { background: var(--line); color: var(--ink-faint); cursor: not-allowed; }
+.send-btn { background: var(--accent); color: var(--accent-ink); }
+.send-btn:hover { filter: brightness(1.08); }
+
+@media (max-width: 720px) {
+  .ai-screen { height: calc(100vh - 220px); }
+  .bubble { max-width: 92%; }
+}

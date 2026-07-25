@@ -1,0 +1,30 @@
+/* Chart primitives shared by line-chart.js and bar-chart.js. Mark specs
+   and spacers per .claude/skills/dataviz/references/marks-and-anatomy.md.
+   fill/stroke for series color come from the SVG element's own attribute
+   (set per-instance in JS) — deliberately not redeclared here, so this
+   sheet never fights the per-chart color. */
+
+.chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.chart-grid { stroke: var(--line); stroke-width: 1; }
+.chart-axis-label { font: var(--fs-11) var(--font-mono); fill: var(--ink-faint); }
+
+.chart-area { opacity: 0.10; }
+.chart-line { stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-end-dot { stroke: var(--bg-2); stroke-width: 2; }
+.chart-end-label { font: 600 var(--fs-12) var(--font-mono); fill: var(--ink); }
+
+.chart-crosshair { stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 2 3; pointer-events: none; }
+.chart-hover-dot { stroke: var(--bg-2); stroke-width: 2; pointer-events: none; }
+.chart-tooltip { pointer-events: none; }
+.chart-tooltip-bg { fill: var(--bg-1); stroke: var(--line-strong); stroke-width: 1; }
+.chart-tooltip-t { font: var(--fs-11) var(--font-mono); fill: var(--ink-faint); }
+.chart-tooltip-v { font: 600 var(--fs-12) var(--font-mono); fill: var(--ink); transform: translateY(14px); }
+
+.chart-bar-row-clickable { cursor: pointer; }
+.chart-bar-row-clickable:hover .chart-bar-track { fill: var(--line-strong); }
+.chart-bar-label { font: var(--fs-12) var(--font-ui); fill: var(--ink-dim); }
+.chart-bar-value { font: 600 var(--fs-12) var(--font-mono); fill: var(--ink); }
+.chart-bar-track { fill: var(--line); }
+
+.chart-empty { color: var(--ink-faint); font-style: italic; padding: var(--sp-3) 0; font-size: var(--fs-13); }

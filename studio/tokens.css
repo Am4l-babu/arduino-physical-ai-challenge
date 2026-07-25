@@ -1,0 +1,102 @@
+/* DOMORA Studio — design tokens. Single source of truth for color, type,
+   space, radius, shadow, and motion. Dark is the designed default; light
+   flips the same tokens. Change the system here, nowhere else. */
+
+:root {
+  color-scheme: dark;
+
+  /* --- layered backgrounds (elevation ladder) --- */
+  --bg-0: #06070a;
+  --bg-1: #0b0d12;
+  --bg-2: #12151c;
+  --ink: #eef1f6;
+  --ink-dim: #aab2c0;
+  --ink-faint: #6b7484;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  /* --- glass panel primitive --- */
+  --glass-bg: rgba(22, 25, 33, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.06);
+  --glass-blur: 20px;
+
+  /* --- accent --- */
+  --accent: #5eb1ff;
+  --accent-ink: #04101f;
+  --accent-glow: rgba(94, 177, 255, 0.35);
+
+  /* --- state colors: the house's vocabulary of health --- */
+  --st-ok: #3ee08a;
+  --st-ok-glow: rgba(62, 224, 138, 0.35);
+  --st-warn: #f5b955;
+  --st-warn-glow: rgba(245, 185, 85, 0.35);
+  --st-crit: #ff5d6c;
+  --st-crit-glow: rgba(255, 93, 108, 0.40);
+  --st-learn: #6c8dff;
+  --st-learn-glow: rgba(108, 141, 255, 0.35);
+  --st-pred: #c084fc;
+  --st-pred-glow: rgba(192, 132, 252, 0.35);
+
+  /* --- type --- */
+  --font-ui: -apple-system, "SF Pro Display", "Segoe UI", "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --fs-11: 0.6875rem; --fs-12: 0.75rem; --fs-13: 0.8125rem;
+  --fs-15: 0.9375rem; --fs-18: 1.125rem; --fs-24: 1.5rem; --fs-40: 2.5rem;
+
+  /* --- space (4px base grid) --- */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-6: 24px; --sp-8: 32px; --sp-12: 48px;
+
+  /* --- radius --- */
+  --r-1: 10px; --r-2: 16px; --r-3: 24px; --r-pill: 999px;
+
+  /* --- shadow --- */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.35), 0 1px 0 var(--glass-highlight) inset;
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.45), 0 1px 0 var(--glass-highlight) inset;
+
+  /* --- motion --- */
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --dur-1: 120ms; --dur-2: 200ms; --dur-3: 320ms; --dur-4: 500ms; --dur-breathe: 4200ms;
+
+  /* --- chart: categorical identity (series count is small everywhere in
+     DOMORA — NILM appliances top out at a handful), sequential (single-
+     series trend). Reference-validated per skill/dataviz; re-run
+     scripts/validate_palette.js against these exact surfaces before adding
+     a 4th slot or changing a hex. --- */
+  --cat-1: #3987e5; /* blue   */
+  --cat-2: #d95926; /* orange */
+  --cat-3: #199e70; /* aqua   */
+  --seq: var(--accent);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; /* aqua sub-3:1 on light — always pair with a direct label */
+  --bg-0: #f3f4f7; --bg-1: #ffffff; --bg-2: #ffffff;
+  --ink: #14161b; --ink-dim: #545b68; --ink-faint: #8891a0;
+  --line: rgba(10, 12, 18, 0.08); --line-strong: rgba(10, 12, 18, 0.14);
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(10, 12, 18, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
+  --accent-ink: #04101f;
+  --shadow-2: 0 8px 24px rgba(20, 22, 27, 0.08), 0 1px 0 var(--glass-highlight) inset;
+  --shadow-3: 0 24px 64px rgba(20, 22, 27, 0.12), 0 1px 0 var(--glass-highlight) inset;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a;
+    --bg-0: #f3f4f7; --bg-1: #ffffff; --bg-2: #ffffff;
+    --ink: #14161b; --ink-dim: #545b68; --ink-faint: #8891a0;
+    --line: rgba(10, 12, 18, 0.08); --line-strong: rgba(10, 12, 18, 0.14);
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(10, 12, 18, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.8);
+    --accent-ink: #04101f;
+    --shadow-2: 0 8px 24px rgba(20, 22, 27, 0.08), 0 1px 0 var(--glass-highlight) inset;
+    --shadow-3: 0 24px 64px rgba(20, 22, 27, 0.12), 0 1px 0 var(--glass-highlight) inset;
+  }
+}
