@@ -1,0 +1,1 @@
+{"clusters": [{"label": "cluster1", "mean_w": 150, "events": 4}, {"label": "kettle", "mean_w": 1800, "events": 2}, {"label": "cluster3", "mean_w": 60, "events": 2}], "energy_wh": {"cluster1": 1.67, "kettle": 7.495, "cluster3": 0.248}}

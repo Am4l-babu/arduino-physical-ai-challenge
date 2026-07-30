@@ -431,11 +431,16 @@ against the live hub before widening):
 
 | Phase | Deliverable | Done when |
 |---|---|---|
-| A | Scaffold, theme, hub_client (WS+HTTP), store, Connect screen, Home | Running app connects to a live `--scenario stuck` hub and the Home screen shows the real leak/valve-suspect state, verified by actually running the app (not just `flutter analyze`) |
-| B | AI chat | Real grounded answers from POST /ai render in a chat UI |
-| C | Energy/Water/Security | Real charts (CustomPainter, ported mark specs) + real alerts |
-| D | Room/Appliance/Sensor | Same click-through drill-down as Studio |
-| E | History/Insights/Settings + search | Playback scrub, real insight cards, real /graph data |
+| A | ✅ Scaffold, theme, hub_client (WS+HTTP), store, Connect screen, Home | ✅ Running app connects to a live `--scenario stuck` hub and the Home screen shows the real leak/valve-suspect state, verified by actually running the app (not just `flutter analyze`) |
+| B | ✅ AI chat | ✅ Real grounded answers from POST /ai render in a chat UI |
+| C | ✅ Energy/Water/Security | ✅ Real charts (CustomPainter line + widget-composed bars, ported mark specs) + real alerts |
+| D | ✅ Room/Appliance/Sensor | ✅ Same click-through drill-down as Studio (Home zone → Room → Sensor; Energy bar → Appliance) |
+| E | ✅ History/Insights/Settings + search | ✅ Playback scrub (verified time-aware), real insight cards, real /graph data |
+
+**All five phases shipped.** 47 tests + `flutter analyze` clean; verified live
+against real running hubs (real WebSocket + real HTTP), and the compiled app
+was screenshotted mid-incident rendering the real cognitive chain
+(`leak:main_line → line flow falls below 0.1 L/min · pending` at t=43).
 
 **Honest limits carried over unchanged from §7:** no manual actuation, no
 LLM by default, no 3D twin, no voice, no login/roles. iOS is unbuildable

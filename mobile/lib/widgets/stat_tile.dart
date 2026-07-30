@@ -20,16 +20,23 @@ class StatTile extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: const TextStyle(fontSize: 11, letterSpacing: 0.5, color: DomoraColors.inkFaint)),
           const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: color)),
-              if (unit != null) ...[
-                const SizedBox(width: 4),
-                Text(unit!, style: const TextStyle(fontSize: 12, color: DomoraColors.inkFaint)),
+          // A long value ("1.86 kW" in a 3-up grid on a narrow phone) must
+          // shrink to fit rather than overflow the tile — found by a widget
+          // test on a real 420px surface, not by inspection.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: color)),
+                if (unit != null) ...[
+                  const SizedBox(width: 4),
+                  Text(unit!, style: const TextStyle(fontSize: 12, color: DomoraColors.inkFaint)),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ),

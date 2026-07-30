@@ -5,8 +5,16 @@ import '../core/hub_client.dart';
 import '../core/store.dart';
 import '../theme/tokens.dart';
 import 'ai.dart';
-import 'coming_soon.dart';
+import 'energy.dart';
+import 'history.dart';
 import 'home.dart';
+import 'insights.dart';
+import 'room.dart';
+import 'search.dart';
+import 'security.dart';
+import 'sensor.dart';
+import 'settings.dart';
+import 'water.dart';
 
 class AppShell extends StatefulWidget {
   final DomoraStore store;
@@ -36,20 +44,41 @@ class _AppShellState extends State<AppShell> {
 
   Widget _body() {
     switch (_tab) {
-      case 0:
-        return const HomeScreen();
       case 1:
         return const AiScreen();
       case 2:
-        return const ComingSoonScreen(title: 'Energy', note: 'Phase C — not built yet in the mobile app.');
+        return const EnergyScreen();
       case 3:
-        return const ComingSoonScreen(title: 'Water', note: 'Phase C — not built yet in the mobile app.');
+        return const WaterScreen();
       case 4:
-        return const ComingSoonScreen(title: 'Security', note: 'Phase C — not built yet in the mobile app.');
+        return const SecurityScreen();
       default:
         return const HomeScreen();
     }
   }
+
+  /// Search is search-and-navigate only (see screens/search.dart) — the shell
+  /// owns every destination it can reach, so the search box can never do
+  /// anything the nav couldn't already do.
+  Future<void> _openSearch(BuildContext context) async {
+    final target = await pushScoped<SearchTarget>(context, const SearchScreen());
+    if (target == null || !context.mounted) return;
+    if (target.tab != null) {
+      setState(() => _tab = target.tab!);
+    } else if (target.roomId != null) {
+      await pushScoped(context, RoomScreen(id: target.roomId!));
+    } else if (target.pointKey != null) {
+      await pushScoped(context, SensorScreen(pointKey: target.pointKey!));
+    } else if (target.menu != null) {
+      await _openMenu(context, target.menu!);
+    }
+  }
+
+  Future<void> _openMenu(BuildContext context, String which) => switch (which) {
+        'history' => pushScoped(context, const HistoryScreen()),
+        'insights' => pushScoped(context, const InsightsScreen()),
+        _ => pushScoped(context, const SettingsScreen()),
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -57,24 +86,40 @@ class _AppShellState extends State<AppShell> {
       store: widget.store,
       child: HubScope(
         client: widget.client,
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('DOMORA'),
-            actions: [
-              AnimatedBuilder(
-                animation: widget.store,
-                builder: (context, _) => Padding(
-                  padding: const EdgeInsets.only(right: DomoraSpace.s4),
-                  child: _StatusPill(connection: widget.store.connection, now: widget.store.now),
+        child: Builder(
+          builder: (innerContext) => Scaffold(
+            appBar: AppBar(
+              title: const Text('DOMORA'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search_rounded),
+                  tooltip: 'Search screens, rooms, points',
+                  onPressed: () => _openSearch(innerContext),
                 ),
-              ),
-            ],
-          ),
-          body: _body(),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _tab,
-            onTap: (i) => setState(() => _tab = i),
-            items: [for (final t in _tabs) BottomNavigationBarItem(icon: Icon(t.icon), label: t.label)],
+                PopupMenuButton<String>(
+                  tooltip: 'More',
+                  onSelected: (v) => _openMenu(innerContext, v),
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'history', child: Text('History')),
+                    PopupMenuItem(value: 'insights', child: Text('AI Insights')),
+                    PopupMenuItem(value: 'settings', child: Text('Settings')),
+                  ],
+                ),
+                AnimatedBuilder(
+                  animation: widget.store,
+                  builder: (context, _) => Padding(
+                    padding: const EdgeInsets.only(right: DomoraSpace.s4),
+                    child: _StatusPill(connection: widget.store.connection, now: widget.store.now),
+                  ),
+                ),
+              ],
+            ),
+            body: _body(),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _tab,
+              onTap: (i) => setState(() => _tab = i),
+              items: [for (final t in _tabs) BottomNavigationBarItem(icon: Icon(t.icon), label: t.label)],
+            ),
           ),
         ),
       ),

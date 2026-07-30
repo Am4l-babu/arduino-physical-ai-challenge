@@ -1,38 +1,11 @@
 // Widget test: pumps the real HomeScreen against the real store, fed with
 // real captured hub frames — same discipline as the web Studio's headless
 // DOM-shim verification, but as a first-class flutter_test widget test.
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:domora_mobile/core/app_scope.dart';
 import 'package:domora_mobile/core/store.dart';
 import 'package:domora_mobile/screens/home.dart';
-import 'package:domora_mobile/theme/tokens.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-List<Map<String, dynamic>> _loadFrames(String name) {
-  final raw = File('test/fixtures/$name').readAsStringSync();
-  return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
-}
-
-void _feed(DomoraStore store, List<Map<String, dynamic>> frames) {
-  for (final f in frames) {
-    switch (f['type']) {
-      case 'snapshot':
-        store.applySnapshot(f);
-      case 'point':
-        store.applyPoint(f);
-      case 'event':
-        store.applyEvent(f);
-    }
-  }
-}
-
-Widget _harness(DomoraStore store) => MaterialApp(
-      theme: domoraDarkTheme(),
-      home: StoreScope(store: store, child: const HomeScreen()),
-    );
+import 'support.dart';
 
 void main() {
   // Home is a scrolling ListView; the default 800px test surface leaves the
@@ -40,7 +13,7 @@ void main() {
   // the viewport). Give the test surface room for the whole screen instead
   // of asserting through a scroll — simpler and just as real.
   Future<void> useTallSurface(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(400, 2200);
+    tester.view.physicalSize = tallSurface;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
   }
@@ -48,9 +21,9 @@ void main() {
   testWidgets('Home renders the real leak/valve-suspect escalation as critical', (tester) async {
     await useTallSurface(tester);
     final store = DomoraStore();
-    _feed(store, _loadFrames('stuck_frames.json'));
+    feed(store, loadFrames('stuck_frames.json'));
 
-    await tester.pumpWidget(_harness(store));
+    await tester.pumpWidget(harness(store, mockHub(store), const HomeScreen()));
     await tester.pump();
 
     expect(find.text('Water / Utility'), findsOneWidget);
@@ -63,7 +36,7 @@ void main() {
     await useTallSurface(tester);
     final store = DomoraStore();
 
-    await tester.pumpWidget(_harness(store));
+    await tester.pumpWidget(harness(store, mockHub(store), const HomeScreen()));
     await tester.pump();
 
     expect(find.text('No autonomous action yet — the house is watching.'), findsOneWidget);

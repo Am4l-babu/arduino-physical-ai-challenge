@@ -9,6 +9,7 @@ import '../theme/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/health_dot.dart';
 import '../widgets/stat_tile.dart';
+import 'room.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -144,6 +145,15 @@ class _ZoneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = DomoraColors.forState(zone.state);
+    // Click-through to the room detail page, same entry point Studio uses.
+    return InkWell(
+      onTap: () => pushScoped(context, RoomScreen(id: zone.id)),
+      borderRadius: BorderRadius.circular(DomoraRadius.r1),
+      child: _card(color),
+    );
+  }
+
+  Widget _card(Color color) {
     return Container(
       width: 150,
       padding: const EdgeInsets.all(DomoraSpace.s3),
