@@ -10,7 +10,12 @@ from hub.agents.base import Agent
 RANGES = {
     "flow_lpm": (0.0, 60.0),
     "power_w": (0.0, 25000.0),
-    "current_a": (0.0, 30.0),
+    "current_a": (0.0, 30.0),        # one SCT-013-030 clamp's own ceiling
+    "voltage_v": (0.0, 300.0),       # PZEM-004T v3 reads 80-260 V; headroom so a
+                                     # real surge is logged, not quarantined
+    "frequency_hz": (0.0, 100.0),
+    "power_factor": (0.0, 1.0),
+    "energy_kwh": (0.0, 10000.0),    # PZEM v3 accumulator wraps at 9999.99
     "level_pct": (0.0, 100.0),
     "radar": (0, 1),
     "pir": (0, 1),

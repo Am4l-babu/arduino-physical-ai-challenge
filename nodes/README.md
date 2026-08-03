@@ -34,10 +34,22 @@ Firmware rules (mirror the hub's agent contracts):
 4. **Safe reboot states.** All outputs to fail-safe on watchdog reset
    (spec §16.2: fail-safe is chosen per asset, not a slogan).
 
-`env_node/env_node.ino` is written and compile-checked against the real
-ESP32-C6 toolchain (arduino-cli, esp32 core 3.3.9) — see
-[env_node/README.md](env_node/README.md) for setup — but not yet flashed to
-hardware. Role/room/sensor-mix currently come from a local `config.h`
-(gitignored — copy `config.h.example`), not yet a flashed SPIFFS/NVS
-`node.yaml`; that layer is deferred until the config pattern proves out on
-one real board.
+Three of the four firmwares are written and compile-checked against the real
+ESP32-C6 toolchain (arduino-cli 1.5.0, esp32 core 3.3.9), **none of them
+flashed to hardware yet**:
+
+| Firmware | Configs compile-checked | Notes |
+|---|---|---|
+| [env_node/](env_node/README.md) | 3 | BME280/radar/PIR/lux/reed |
+| [tank_node/](tank_node/README.md) | 5 | includes the hardwired leak reflex |
+| [panel_node/](panel_node/README.md) | 6 | sensing-only: no relay, no command topic |
+
+Rule 1 above says reflexes are local — but only where the spec calls for one.
+The panel node has no reflex and no actuator on purpose: spec §11.1 makes
+panel work sensing-first, with any mains actuation going through certified
+contactors, so that board can physically only publish. The tank node is where
+the copper-not-radio reflex lives.
+
+Role/room/sensor-mix currently come from a local `config.h` (gitignored —
+copy `config.h.example`), not yet a flashed SPIFFS/NVS `node.yaml`; that
+layer is deferred until the config pattern proves out on one real board.

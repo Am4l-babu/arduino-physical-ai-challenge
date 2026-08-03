@@ -1,0 +1,118 @@
+// DOMORA PANEL node — local configuration template.
+//
+// Copy this file to config.h (same directory) and fill in real values.
+// config.h is gitignored — it never enters version control.
+//
+//   cp config.h.example config.h
+
+#pragma once
+
+// --- identity (must match a CN provisioned by tools/gen_certs.py) ---
+// The whole-house electrical node: 3x CT clamps + PZEM reference meter.
+// This is the node sim/virtual_loads.py stands in for, and the only source
+// of main_panel.power_w — the single point hub/agents/energy.py's NILM
+// pipeline reads.
+#define NODE_ID   "fp1"
+
+// --- Wi-Fi ---
+#define WIFI_SSID   "your-ssid"
+#define WIFI_PASS   "your-password"
+
+// --- MQTT broker ---
+#define MQTT_HOST   "192.168.1.50"
+#define MQTT_PORT   8883
+
+// --- hardware actually wired ---
+#define HAS_CT1   1   // SCT-013-030 clamp #1
+#define HAS_CT2   1   // SCT-013-030 clamp #2
+#define HAS_CT3   1   // SCT-013-030 clamp #3
+#define HAS_PZEM  1   // PZEM-004T v3 reference meter (Modbus-RTU over UART)
+
+// --- where power_w comes from ---
+// 1 = the PZEM is clamped on the WHOLE-HOUSE incomer, so its power() reading
+//     is real measured power. No voltage or power-factor assumption. Use this
+//     whenever it is true — it is the honest path.
+// 0 = power_w is derived from the CT clamps: (aggregate current) x voltage x
+//     ASSUMED_POWER_FACTOR. Use this when the PZEM is only a bench calibration
+//     reference on a single circuit (which is how docs/BOM_ORDER.md describes
+//     it), or when there is no PZEM at all.
+#define POWER_FROM_PZEM   1
+
+// --- which clamps make up the whole house ---
+//
+// READ THIS BEFORE CHANGING IT. Marking the wrong set here silently doubles
+// or halves the house load, and every NILM number downstream inherits the
+// error without anything looking broken.
+//
+//   * A clamp on the incomer ALREADY INCLUDES every sub-circuit downstream of
+//     it. Marking both the incomer and a sub-circuit in-aggregate counts that
+//     sub-circuit twice.
+//   * A CT clamp is UNSIGNED — it cannot distinguish imported from exported
+//     current. A clamp on a solar feed must be 0 here: its reading is
+//     generation, and adding generation to consumption is just wrong.
+//   * Three-phase supply is the case where all three are legitimately 1:
+//     three separate incomers, no overlap, and they genuinely sum.
+//
+// Default below assumes the common single-phase Indian home: clamp #1 on the
+// incomer (the aggregate), clamps #2 and #3 monitoring individual circuits.
+#define CT1_IN_AGGREGATE  1
+#define CT2_IN_AGGREGATE  0
+#define CT3_IN_AGGREGATE  0
+
+// --- pins (ESP32-C6 DevKit; adjust to your wiring) ---
+// The three CT pins must be ADC-capable. PZEM RX/TX are ordinary GPIOs
+// driven by Serial1 (UART1) — note RX here is the ESP32's receive pin, which
+// wires to the PZEM's TX, and vice versa.
+#define PIN_CT1_ADC   0
+#define PIN_CT2_ADC   1
+#define PIN_CT3_ADC   2
+#define PIN_PZEM_RX   4
+#define PIN_PZEM_TX   5
+
+// --- CT calibration ---
+// Amps-per-ADC-count depends on the clamp's turns ratio AND your burden
+// resistor value — there is no safe universal constant, which is exactly why
+// docs/BOM_ORDER.md buys the PZEM as a "calibration reference". Procedure:
+// run a known steady load (a resistive heater or kettle is ideal — its power
+// factor is ~1, so the PZEM's watts divided by its volts gives you true amps),
+// read the PZEM's current, and scale these until the clamp agrees.
+// Per-channel rather than shared: burden resistors have real tolerance and
+// three clamps will not calibrate identically.
+#define CT1_AMPS_PER_COUNT   0.01f
+#define CT2_AMPS_PER_COUNT   0.01f
+#define CT3_AMPS_PER_COUNT   0.01f
+
+// Readings below this are the ADC's own noise, not a load. Set it just above
+// what the clamps report with the breaker off — too low and the house grows a
+// phantom always-on baseline plus a stream of fake NILM edges; too high and
+// small real loads (an LED lamp) vanish. Measure it, do not guess it.
+#define CT_NOISE_FLOOR_A     0.05f
+
+// Sampling window per channel, milliseconds. 100 ms is exactly 5 cycles at
+// 50 Hz — sampling a whole number of mains cycles is what keeps the RMS from
+// wobbling with where in the waveform the window happened to start. Use 100
+// for 50 Hz (India/EU) or a multiple of 16.67 ms for 60 Hz.
+#define CT_SAMPLE_WINDOW_MS  100
+
+// --- power derivation (only used when POWER_FROM_PZEM is 0) ---
+// Fallback voltage when no PZEM is wired to measure the real one. Indian
+// nominal is 230 V, but real supply wanders far enough that this is an
+// assumption, not a fact — which is the whole reason POWER_FROM_PZEM = 1 is
+// preferred where it applies.
+#define NOMINAL_VOLTAGE_V     230.0f
+
+// Assumed power factor for the CT-derived path. ~0.95 is reasonable for a
+// mixed domestic load dominated by resistive appliances. It is WRONG for
+// motor-heavy moments (pump, compressor, washing machine mid-spin), where
+// true PF can fall to 0.6-0.7. NILM's edge detection survives this because it
+// reads step changes, not absolutes; the energy ledger does not.
+#define ASSUMED_POWER_FACTOR  0.95f
+
+// --- timing ---
+// Slower than the tank node's 1 s: nothing here is time-critical (this board
+// has no reflex and no actuator), and one sense cycle already spends
+// 3 x CT_SAMPLE_WINDOW_MS busy-sampling the ADC. NILM's edge detector works
+// on step changes between stable levels, which 2 s resolves fine.
+#define SENSE_PERIOD_MS   2000
+#define WIFI_TIMEOUT_MS   15000
+#define MQTT_RETRY_MS     5000

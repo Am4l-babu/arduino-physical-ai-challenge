@@ -1,0 +1,30 @@
+// DOMORA PANEL node — TLS identity template.
+//
+// Copy to certs.h (gitignored) and paste in this node's PKI files:
+//
+//   python -m tools.gen_certs --out certs --nodes fp1 fp2 env1 perc1
+//
+// CA_CERT      <- certs/ca.pem   (shared house CA)
+// CLIENT_CERT  <- certs/fp1.pem  (this node's identity — CN "fp1" doubles
+//                                 as the broker ACL username)
+// CLIENT_KEY   <- certs/fp1.key  (this node's private key)
+
+#pragma once
+
+static const char CA_CERT[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+PASTE certs/ca.pem HERE
+-----END CERTIFICATE-----
+)EOF";
+
+static const char CLIENT_CERT[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+PASTE certs/fp1.pem HERE
+-----END CERTIFICATE-----
+)EOF";
+
+static const char CLIENT_KEY[] PROGMEM = R"EOF(
+-----BEGIN RSA PRIVATE KEY-----
+PASTE certs/fp1.key HERE
+-----END RSA PRIVATE KEY-----
+)EOF";
