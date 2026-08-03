@@ -11,11 +11,12 @@ tank+pump topics need to move back onto separate node-ids — the topic
 contract below is what would need splitting.
 
 **Status: compiles clean against the real ESP32-C6 toolchain (arduino-cli
-1.5.0, esp32 core 3.3.9) in 5 configurations — full sensor suite, bare
-board, and three partial mixes exercising the leak-reflex/valve interaction
-from both directions. Never flashed or run on a physical board.** No valve,
-CT clamp, level sensor, or flow meter hardware was in hand while this was
-written; every calibration constant and pin assignment is first-draft.
+1.5.0, esp32 core 3.3.9) in 6 configurations — full sensor suite, bare
+board, and four partial mixes exercising the leak-reflex/valve interaction
+from both directions plus the CT/relay split. Never flashed or run on a
+physical board.** No valve, CT clamp, level sensor, or flow meter hardware
+was in hand while this was written; every calibration constant and pin
+assignment is first-draft.
 
 ## The hardwired reflex
 
@@ -76,12 +77,25 @@ command topics, same as every other actuator in this architecture.
   universal constant. Calibrate against a known load once the hardware is
   in hand (the BOM's panel-node PZEM-004T is explicitly a "calibration
   reference" for exactly this kind of thing).
+- **Pump-on threshold** (`PUMP_ON_THRESHOLD_A`, 0.2 A): measure what the CT
+  reports with the pump off and keep a margin above it. This one is not
+  cosmetic — `hub/twin/virtual_sensors.py`'s `PumpProtection` reads
+  `pump_state`, so a threshold below the noise floor means a permanently-"on"
+  pump, and a dry-run cut on a pump that was never running.
 - **Level calibration** (`LEVEL_EMPTY_CM` / `LEVEL_FULL_CM`): placeholders.
   Measure the actual empty/full ultrasonic distances on the built tank.
 - **Valve drive timing** (`VALVE_DRIVE_MAX_MS`, 15s default): no
   limit-switch feedback assumed. Time a real open/close cycle once the
   valve is in hand and tighten this — too long risks stalling the motor
   against its end-stop for longer than necessary.
+- **CT sampling window** (`PUMP_CT_SAMPLE_WINDOW_MS`, 40 ms): two full mains
+  cycles at 50 Hz. Sampling a whole number of cycles is what stops the RMS
+  wobbling with wherever in the waveform the window opened. Deliberately
+  shorter than the panel node's 100 ms, because sampling blocks and this
+  board carries the leak reflex — every millisecond in the ADC loop is a
+  millisecond `loop()` is not re-checking the probes. Raising it trades
+  reflex latency for reading stability; the panel node can afford the longer
+  window precisely because it has no reflex to delay.
 - **Fail-safe boot states**: both valve relays de-energized at boot (no
   uncommanded motion until a real command arrives). The pump relay is also
   de-energized at boot, deliberately — *not* "leave the pump running": a

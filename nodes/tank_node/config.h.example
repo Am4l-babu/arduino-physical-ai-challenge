@@ -68,6 +68,27 @@
 // reference from docs/BOM_ORDER.md's panel node) before trusting this.
 #define PUMP_CT_AMPS_PER_COUNT  0.01f
 
+// CT sampling window, milliseconds. Must be a whole number of mains cycles
+// or the RMS wobbles with wherever in the waveform the window opened:
+// 40 ms is 2 cycles at 50 Hz (use ~33 ms for 60 Hz).
+//
+// Deliberately shorter than the panel node's 100 ms. Sampling blocks, and
+// this board carries the hardwired leak reflex — every millisecond spent in
+// the ADC loop is a millisecond loop() is not re-checking the leak probes.
+// 40 ms is enough for a stable reading on a measurement whose only job is an
+// on/off decision at PUMP_ON_THRESHOLD_A, and it keeps the reflex's worst-
+// case blind spot small. Do not raise this without thinking about that
+// trade; the panel node can afford a longer window precisely because it has
+// no reflex to delay.
+#define PUMP_CT_SAMPLE_WINDOW_MS  40
+
+// Current above which the pump is reported as running. Sits above the noise
+// the CT reports with the pump off — measure that on the bench and keep a
+// margin. hub/twin/virtual_sensors.py's PumpProtection reads this state, so
+// a threshold set below the noise floor means a permanently-"on" pump and a
+// dry-run cut on a pump that was never running.
+#define PUMP_ON_THRESHOLD_A     0.2f
+
 // Valve motor timed-drive safety cutoff — stop driving after this long
 // regardless of feedback (no limit-switch wiring assumed). Tune to the
 // actual valve's travel time once it's in hand; err on the long side first,

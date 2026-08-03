@@ -225,21 +225,51 @@ float read_level_pct() {
 #endif
 
 // ---------------------------------------------------------------------
-// Pump CT clamp: true-RMS current over one mains cycle window.
+// Pump CT clamp: true-RMS current over a whole number of mains cycles.
+//
+// The DC midpoint is MEASURED, not assumed to be half of full scale. The
+// bias network that lifts the clamp's AC output into the ADC's range is two
+// real resistors and never lands exactly on VCC/2, and RMS cannot tell an
+// offset from signal — so a fixed 2048 turns any bias error into phantom
+// current. That matters here more than anywhere: pump_state below trips at
+// 0.2 A, so with PUMP_CT_AMPS_PER_COUNT at 0.01 a bias only ~20 counts off
+// centre reports a pump that is always running. hub/twin/virtual_sensors.py's
+// PumpProtection reads exactly that signal, so the consequence is a dry-run
+// cut on a pump that was never on, or a real dry-run masked by a reading that
+// never changes.
+//
+// Single pass: variance = mean(x^2) - mean(x)^2 yields both the midpoint and
+// the RMS about it without buffering samples. sum_sq needs 64 bits — a 12-bit
+// sample squared reaches ~16.7M and the window holds thousands of them, which
+// overflows a 32-bit accumulator well before the window closes.
+//
+// The window is time-bounded rather than a fixed sample count: how many
+// analogRead() calls fit in one mains cycle is a property of the board and
+// the ADC configuration, not something to hardcode, and sampling a partial
+// cycle makes the RMS wobble with wherever in the waveform the window opened.
+//
+// Same routine as nodes/panel_node/panel_node.ino's read_ct_amps() — the two
+// nodes measure current the same way because it is the same problem.
 // ---------------------------------------------------------------------
 
 #if HAS_PUMP_CT
 float read_pump_current_a() {
-  const int SAMPLES = 200;          // ~20ms at a fast analogRead loop, one 50Hz cycle
-  long sum_sq = 0;
-  int adc_mid = 2048;               // ESP32-C6 ADC is 12-bit; refine after bench zero-check
-  for (int i = 0; i < SAMPLES; i++) {
-    int raw = analogRead(PIN_PUMP_CT_ADC);
-    int centered = raw - adc_mid;
-    sum_sq += (long)centered * centered;
+  uint64_t sum = 0, sum_sq = 0;
+  uint32_t n = 0;
+  unsigned long start = millis();
+  while (millis() - start < PUMP_CT_SAMPLE_WINDOW_MS) {
+    uint32_t raw = (uint32_t)analogRead(PIN_PUMP_CT_ADC);
+    sum += raw;
+    sum_sq += (uint64_t)raw * raw;
+    n++;
   }
-  float rms_counts = sqrt((float)sum_sq / SAMPLES);
-  return rms_counts * PUMP_CT_AMPS_PER_COUNT;
+  if (n == 0) return 0.0f;
+
+  double mean = (double)sum / n;
+  double variance = (double)sum_sq / n - mean * mean;
+  if (variance < 0.0) variance = 0.0;   // float noise near zero signal
+
+  return (float)sqrt(variance) * PUMP_CT_AMPS_PER_COUNT;
 }
 #endif
 
@@ -322,7 +352,7 @@ void sense_and_publish(uint32_t elapsed_ms) {
 #if HAS_PUMP_CT
   float current = read_pump_current_a();
   publish_value("pump", "current_a", current);
-  publish_enum("pump", "pump_state", current > 0.2f ? "on" : "off");
+  publish_enum("pump", "pump_state", current > PUMP_ON_THRESHOLD_A ? "on" : "off");
 #endif
 }
 
