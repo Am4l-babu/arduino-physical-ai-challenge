@@ -12,6 +12,7 @@ import 'package:domora_mobile/screens/search.dart';
 import 'package:domora_mobile/screens/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support.dart';
 
@@ -146,6 +147,75 @@ void main() {
       }
 
       expect(find.text('House graph not available from this server.'), findsWidgets);
+    });
+
+    group('Hub connection card', () {
+      // The app now opens before any address is known (docs/APP_PLAN.md §9)
+      // — this card is where one is entered afterward. None of these tests
+      // save a real, differing, non-empty address: doing so would call
+      // HubClient.reconnectTo() and open a genuine WebSocket connection,
+      // which has no place in this suite (no test anywhere in this repo
+      // exercises HubClient.connect() against a real socket — see the
+      // network-free tests in hub_client_test.dart for why).
+
+      TextField hubAddressField(WidgetTester tester) => tester.widget<TextField>(find.byType(TextField));
+
+      testWidgets('pre-fills the field with the client\'s current address', (tester) async {
+        await useTallSurface(tester);
+        SharedPreferences.setMockInitialValues({});
+        final store = DomoraStore();
+        final client = mockHub(store); // baseUrl: '127.0.0.1:8080'
+
+        await tester.pumpWidget(harness(store, client, const SettingsScreen(), scaffold: false));
+        await tester.pump();
+
+        expect(hubAddressField(tester).controller!.text, '127.0.0.1:8080');
+      });
+
+      testWidgets('the emulator hint fills in 10.0.2.2:8080 without saving anything', (tester) async {
+        await useTallSurface(tester);
+        SharedPreferences.setMockInitialValues({});
+        final store = DomoraStore();
+        final client = mockHub(store);
+
+        await tester.pumpWidget(harness(store, client, const SettingsScreen(), scaffold: false));
+        await tester.pump();
+        await tester.tap(find.textContaining('10.0.2.2:8080'));
+        await tester.pump();
+
+        expect(hubAddressField(tester).controller!.text, '10.0.2.2:8080');
+        expect(client.baseUrl, '127.0.0.1:8080', reason: 'filling the hint must not itself reconnect');
+      });
+
+      testWidgets('saving a blank address shows an inline error and never reconnects', (tester) async {
+        await useTallSurface(tester);
+        SharedPreferences.setMockInitialValues({});
+        final store = DomoraStore();
+        final client = mockHub(store);
+
+        await tester.pumpWidget(harness(store, client, const SettingsScreen(), scaffold: false));
+        await tester.pump();
+        await tester.enterText(find.byType(TextField), '');
+        await tester.tap(find.text('Save & connect'));
+        await tester.pump();
+
+        expect(find.text("Enter the hub's host:port."), findsOneWidget);
+        expect(client.baseUrl, '127.0.0.1:8080',
+            reason: 'a rejected blank save must never touch the live address');
+      });
+
+      testWidgets('shows "not connected" status when the store has never dialed anything',
+          (tester) async {
+        await useTallSurface(tester);
+        SharedPreferences.setMockInitialValues({});
+        final store = DomoraStore(); // default connection: 'unconfigured'
+        final client = mockHub(store);
+
+        await tester.pumpWidget(harness(store, client, const SettingsScreen(), scaffold: false));
+        await tester.pump();
+
+        expect(find.textContaining('Not connected'), findsOneWidget);
+      });
     });
   });
 

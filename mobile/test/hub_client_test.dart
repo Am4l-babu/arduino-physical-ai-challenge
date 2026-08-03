@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:domora_mobile/core/hub_client.dart';
 import 'package:domora_mobile/core/store.dart';
 
@@ -26,6 +27,64 @@ const _realUnknownBody =
     '{"text": "I don\'t have data to answer that yet \\u2014 try asking about power, water, leaks, appliance health, what changed while you were away, or the house\'s overall status.", "evidence": {}, "intent": "unknown"}';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('connection state without ever touching the network', () {
+    // The app now opens before any address is known (see main.dart /
+    // docs/APP_PLAN.md §9) — these paths must be entirely synchronous and
+    // network-free, unlike every other test in this file which deliberately
+    // never calls connect()/reconnectTo() with a real address either (a
+    // genuine WebSocket attempt has no place in this suite).
+
+    test('connect() with no address set reports unconfigured, not connecting', () {
+      final store = DomoraStore();
+      final client = HubClient(baseUrl: '', store: store);
+
+      client.connect();
+
+      expect(store.connection, 'unconfigured',
+          reason: 'no dial is happening, so "connecting" would be a lie');
+      client.dispose();
+    });
+
+    test('reconnectTo("") degrades back to unconfigured rather than looping on nothing', () {
+      final store = DomoraStore();
+      final client = HubClient(baseUrl: 'stale.example:1', store: store);
+
+      client.reconnectTo('');
+
+      expect(client.baseUrl, '');
+      expect(store.connection, 'unconfigured');
+      client.dispose();
+    });
+
+    test('reconnectTo() clears stale points from whatever hub was connected before', () {
+      final store = DomoraStore();
+      store.applyPoint({'key': 'house.occupied', 'value': true, 't': 5});
+      expect(store.points, isNotEmpty); // precondition
+
+      final client = HubClient(baseUrl: 'old-house.example:8080', store: store);
+      client.reconnectTo('');
+
+      expect(store.points, isEmpty,
+          reason: 'a different hub (or none) must not inherit the previous one\'s state');
+      client.dispose();
+    });
+  });
+
+  group('saved hub address (shared_preferences) — Settings reads/writes this', () {
+    test('loadSavedAddress returns null on a first-ever launch', () async {
+      SharedPreferences.setMockInitialValues({});
+      expect(await HubClient.loadSavedAddress(), isNull);
+    });
+
+    test('saveAddress persists exactly what loadSavedAddress later returns', () async {
+      SharedPreferences.setMockInitialValues({});
+      await HubClient.saveAddress('192.168.1.5:8080');
+      expect(await HubClient.loadSavedAddress(), '192.168.1.5:8080');
+    });
+  });
+
   test('askAi parses a real "no leak" response', () async {
     final client = HubClient(
       baseUrl: 'example.test',

@@ -20,8 +20,15 @@ the hub already serves ([hub/services/api.py](../hub/services/api.py)):
 | `GET /playback.json` | History's scrubber |
 
 Unlike Studio — which the hub *serves*, so relative URLs just work — this app
-is a separate OS process, often on a separate device. The **Connect screen**
-takes `host:port` and persists it via `shared_preferences`.
+is a separate OS process, often on a separate device, so it has to be told
+`host:port` somewhere. **It does not gate on that**: the app opens straight
+into the Home screen every time, with a previously-saved address (if any)
+dialed in the background. **Settings → Hub connection** is where an address
+is entered or changed, persisted via `shared_preferences` — at any point
+after launch, never as a precondition for it. Whenever the hub isn't live, a
+tap-through banner (every tab) and the app-bar status pill both point at that
+same card, so getting connected stays one tap away without blocking anything
+else in the meantime.
 
 ## Running it
 
@@ -29,7 +36,7 @@ takes `host:port` and persists it via `shared_preferences`.
 # 1. start a hub (any scenario: leak, stuck, energy, dryrun, dryrun_stuck)
 python -m hub.services.api --scenario stuck
 
-# 2. run the app and point it at that hub
+# 2. run the app, then open Settings → Hub connection and enter the address
 flutter run                      # 10.0.2.2:8080 from the Android emulator
 ```
 
@@ -46,7 +53,7 @@ python -m hub.services.api --playback demo.db
 lib/
   core/     store · hub_client · twin · nilm · insights · playback · format
   widgets/  glass_card · stat_tile · health_dot · line_chart · bar_chart · incident_row
-  screens/  connect · app_shell · home · ai · energy · water · security
+  screens/  app_shell · home · ai · energy · water · security
             room · appliance · sensor · history · insights · settings · search
 ```
 
@@ -60,7 +67,7 @@ already validated during the Studio build).
 ## Tests
 
 ```bash
-flutter test      # 47 tests
+flutter test      # 56 tests
 flutter analyze
 ```
 

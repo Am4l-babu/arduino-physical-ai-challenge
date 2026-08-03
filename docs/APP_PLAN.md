@@ -374,10 +374,23 @@ real running hub before the next starts.
 **Key difference from the web app, and why it matters:** Studio is *served
 by* the hub, so relative URLs just work. A Flutter app is a separate OS
 process (often a separate device) — it needs to be told where the hub is.
-A **Connect screen** (host:port, defaults to `10.0.2.2:8080` on the Android
-emulator — the emulator's alias for the host machine's `localhost` — editable
-for a real device on the LAN) persists the URL via `shared_preferences` and
-gates the rest of the app.
+
+**Revised 2026-08-04, owner request: the app opens without one.** The
+original design gated entry behind a Connect screen — no hub address, no
+app. That's backwards for a "house" app: you should be able to open it,
+look around, and connect once you know the address, not be locked out
+before you've seen anything. Now `main.dart` builds `AppShell` directly; a
+previously-saved address (`shared_preferences`, unchanged storage) is
+loaded and dialed in the background if one exists, and the **Settings**
+screen's "Hub connection" card is where an address is entered or changed —
+at any point after launch, never as a precondition for it. `HubClient`
+gained a fourth `connection` state, `unconfigured` (no address set yet, as
+opposed to `connecting`/`live`/`down` which all imply a dial is underway),
+and a non-blocking banner across every tab plus a tappable status pill both
+point at Settings whenever the hub isn't live — the discoverability the
+old gate provided for free, kept without the lockout. `10.0.2.2:8080` (the
+Android emulator's alias for the host machine) is still one tap away as a
+hint button on that card.
 
 **Packages** (kept to the official/minimal set — same "delete complexity"
 instinct as Studio's zero-dependency web build, just not zero-dependency-able

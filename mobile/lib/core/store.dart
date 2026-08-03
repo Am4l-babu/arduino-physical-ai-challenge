@@ -41,7 +41,10 @@ class DomoraStore extends ChangeNotifier {
   static const _seriesLimit = 300; // per key — this session only, see APP_PLAN §7
   static const _feedLimit = 80;
 
-  String connection = 'connecting'; // connecting | live | down
+  // unconfigured: no hub address set yet (or none reachable to attempt) —
+  // the honest default before HubClient.connect() has ever been asked to
+  // dial anything. connecting/live/down all imply an attempt is underway.
+  String connection = 'unconfigured'; // unconfigured | connecting | live | down
   int now = 0;
   final Map<String, Point> points = {};
   final Map<String, List<SeriesPoint>> series = {};

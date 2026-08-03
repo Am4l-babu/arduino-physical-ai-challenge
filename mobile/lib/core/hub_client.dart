@@ -2,19 +2,25 @@
 // /graph, /history, /playback.json. Direct Dart port of studio/core/
 // socket.js's reconnect behavior, plus the HTTP helpers studio/core/
 // history.js, nilm.js, and screens/{ai,settings}.js implement separately
-// in JS. baseUrl is "host:port" (no scheme) — set from the Connect screen,
-// since (unlike Studio) this app is a separate process from the hub and
-// has to be told where it lives. See docs/APP_PLAN.md §9.
+// in JS. baseUrl is "host:port" (no scheme) — since (unlike Studio) this app
+// is a separate process from the hub, it has to be told where it lives.
+//
+// The app opens without one: baseUrl may start empty (nothing saved yet),
+// and Settings is where it is entered or changed, well after launch, via
+// reconnectTo(). See docs/APP_PLAN.md §9.
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'store.dart';
 
 class HubClient {
-  final String baseUrl;
+  static const _prefsKey = 'hub_url';
+
+  String baseUrl;
   final DomoraStore store;
   final http.Client _httpClient;
   WebSocketChannel? _channel;
@@ -26,12 +32,42 @@ class HubClient {
   HubClient({required this.baseUrl, required this.store, http.Client? httpClient})
       : _httpClient = httpClient ?? http.Client();
 
+  /// The last address saved from Settings (or the old Connect screen, on an
+  /// upgrade), if any. Null on a first-ever launch.
+  static Future<String?> loadSavedAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefsKey);
+  }
+
+  static Future<void> saveAddress(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, url);
+  }
+
   Uri _http(String path, [Map<String, String>? query]) => Uri.http(baseUrl, path, query);
   Uri _ws() => Uri.parse('ws://$baseUrl/ws');
 
   void connect() {
     _disposed = false;
+    if (baseUrl.trim().isEmpty) {
+      // Nothing to dial. The app is already open regardless — reporting
+      // "connecting" here would claim an attempt that isn't happening.
+      store.setConnection('unconfigured');
+      return;
+    }
     _connectOnce();
+  }
+
+  /// Point at a different hub — called from Settings, well after the app
+  /// has already opened, never as a launch-time gate. Drops any in-flight
+  /// connection/retry first; stale points from a *different* house have no
+  /// business surviving the switch (DomoraStore.reset()).
+  void reconnectTo(String newBaseUrl) {
+    _reconnectTimer?.cancel();
+    _channel?.sink.close();
+    baseUrl = newBaseUrl.trim();
+    store.reset();
+    connect();
   }
 
   Future<void> _connectOnce() async {

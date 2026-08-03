@@ -108,13 +108,28 @@ class _AppShellState extends State<AppShell> {
                 AnimatedBuilder(
                   animation: widget.store,
                   builder: (context, _) => Padding(
-                    padding: const EdgeInsets.only(right: DomoraSpace.s4),
-                    child: _StatusPill(connection: widget.store.connection, now: widget.store.now),
+                    padding: const EdgeInsets.only(right: DomoraSpace.s2),
+                    child: _StatusPill(
+                      connection: widget.store.connection,
+                      now: widget.store.now,
+                      onTap: () => _openMenu(innerContext, 'settings'),
+                    ),
                   ),
                 ),
               ],
             ),
-            body: _body(),
+            body: Column(
+              children: [
+                AnimatedBuilder(
+                  animation: widget.store,
+                  builder: (context, _) => _ConnectionBanner(
+                    connection: widget.store.connection,
+                    onTap: () => _openMenu(innerContext, 'settings'),
+                  ),
+                ),
+                Expanded(child: _body()),
+              ],
+            ),
             bottomNavigationBar: BottomNavigationBar(
               currentIndex: _tab,
               onTap: (i) => setState(() => _tab = i),
@@ -130,25 +145,74 @@ class _AppShellState extends State<AppShell> {
 class _StatusPill extends StatelessWidget {
   final String connection;
   final int now;
-  const _StatusPill({required this.connection, required this.now});
+  final VoidCallback onTap;
+  const _StatusPill({required this.connection, required this.now, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final color = switch (connection) {
       'live' => DomoraColors.stOk,
       'down' => DomoraColors.stCrit,
-      _ => DomoraColors.inkFaint,
+      'connecting' => DomoraColors.stWarn,
+      _ => DomoraColors.inkFaint, // unconfigured
     };
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
-        const SizedBox(width: 6),
-        Text(
-          't=${now.toString().padLeft(3, '0')}',
-          style: const TextStyle(fontSize: 12, color: DomoraColors.inkFaint, fontFamily: 'monospace'),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(DomoraRadius.pill),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DomoraSpace.s2, vertical: DomoraSpace.s2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+            const SizedBox(width: 6),
+            Text(
+              connection == 'unconfigured' ? 'not set up' : 't=${now.toString().padLeft(3, '0')}',
+              style: const TextStyle(fontSize: 12, color: DomoraColors.inkFaint, fontFamily: 'monospace'),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+/// A slim, dismiss-free strip above every tab when the hub isn't live —
+/// the direct answer to "the app opened, so how do I actually connect it?"
+/// Tapping it opens the same Settings screen the overflow menu does; it
+/// adds no new capability, just a harder-to-miss path to the existing one.
+class _ConnectionBanner extends StatelessWidget {
+  final String connection;
+  final VoidCallback onTap;
+  const _ConnectionBanner({required this.connection, required this.onTap});
+
+  String? get _text => switch (connection) {
+        'live' => null,
+        'unconfigured' => 'Not connected to a DOMORA hub — tap to add one in Settings.',
+        'down' => "Can't reach the hub — retrying in the background. Tap to check the address.",
+        _ => 'Connecting to the hub…',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final text = _text;
+    if (text == null) return const SizedBox.shrink();
+    return Material(
+      color: DomoraColors.bg2,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: DomoraSpace.s4, vertical: DomoraSpace.s2),
+          child: Row(
+            children: [
+              const Icon(Icons.cloud_off_rounded, size: 16, color: DomoraColors.inkFaint),
+              const SizedBox(width: DomoraSpace.s2),
+              Expanded(child: Text(text, style: const TextStyle(fontSize: 12, color: DomoraColors.inkDim))),
+              const Icon(Icons.chevron_right_rounded, size: 16, color: DomoraColors.inkFaint),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

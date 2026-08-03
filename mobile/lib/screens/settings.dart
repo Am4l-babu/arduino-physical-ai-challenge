@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/app_scope.dart';
+import '../core/hub_client.dart';
 import '../theme/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/health_dot.dart';
@@ -78,6 +79,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(DomoraSpace.s4),
         children: [
+          const _HubConnectionCard(),
+          const SizedBox(height: DomoraSpace.s4),
           GlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,4 +178,143 @@ class _AssetRow extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Where a hub address is entered or changed — at any point after launch,
+/// never as a gate before it (see docs/APP_PLAN.md §9 and main.dart). Save
+/// always persists + reconnects unconditionally; the health check that
+/// follows is purely informational, never a precondition for either.
+class _HubConnectionCard extends StatefulWidget {
+  const _HubConnectionCard();
+
+  @override
+  State<_HubConnectionCard> createState() => _HubConnectionCardState();
+}
+
+class _HubConnectionCardState extends State<_HubConnectionCard> {
+  final _controller = TextEditingController();
+  bool _fieldInitialized = false;
+  bool _checking = false;
+  String? _message;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_fieldInitialized) {
+      _controller.text = HubScope.of(context).baseUrl;
+      _fieldInitialized = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final url = _controller.text.trim();
+    if (url.isEmpty) {
+      setState(() => _message = "Enter the hub's host:port.");
+      return;
+    }
+    final client = HubScope.of(context);
+    await HubClient.saveAddress(url);
+    client.reconnectTo(url); // the app is already open; this (re)starts the background connect loop
+
+    setState(() {
+      _checking = true;
+      _message = null;
+    });
+    final reachable = await client.healthCheck();
+    if (!mounted) return;
+    setState(() {
+      _checking = false;
+      _message = reachable
+          ? null
+          : "Could not reach $url/health yet — DOMORA will keep retrying in the background. "
+              'Is the hub running (python -m hub.services.api)?';
+    });
+  }
+
+  String _statusLabel(String connection, String baseUrl) => switch (connection) {
+        'live' => 'Connected to $baseUrl',
+        'down' => "Can't reach $baseUrl — retrying…",
+        'connecting' => 'Connecting to $baseUrl…',
+        _ => baseUrl.isEmpty ? 'Not connected — enter your hub\'s address below.' : 'Not connected to $baseUrl yet.',
+      };
+
+  Color _statusColor(String connection) => switch (connection) {
+        'live' => DomoraColors.stOk,
+        'down' => DomoraColors.stCrit,
+        'connecting' => DomoraColors.stWarn,
+        _ => DomoraColors.inkFaint,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final client = HubScope.of(context);
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CardTitle('Hub connection'),
+          AnimatedBuilder(
+            animation: StoreScope.of(context),
+            builder: (context, _) {
+              final connection = StoreScope.of(context).connection;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: DomoraSpace.s3),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: _statusColor(connection)),
+                    ),
+                    const SizedBox(width: DomoraSpace.s2),
+                    Expanded(
+                      child: Text(_statusLabel(connection, client.baseUrl),
+                          style: const TextStyle(fontSize: 13, color: DomoraColors.inkDim)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          TextField(
+            controller: _controller,
+            style: const TextStyle(color: DomoraColors.ink),
+            decoration: const InputDecoration(
+              labelText: 'Hub address',
+              hintText: 'e.g. 192.168.1.5:8080',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _save(),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => setState(() => _controller.text = '10.0.2.2:8080'),
+              child: const Text('Use 10.0.2.2:8080 (Android emulator → host machine)'),
+            ),
+          ),
+          if (_message != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: DomoraSpace.s2),
+              child: Text(_message!, style: const TextStyle(fontSize: 12, color: DomoraColors.stCrit)),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: _checking ? null : _save,
+              child: _checking
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Save & connect'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
