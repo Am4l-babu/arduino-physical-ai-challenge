@@ -31,12 +31,52 @@
 #define HAS_PIR       1   // pir (motion)
 #define HAS_REED      1   // door (reed contact)
 
+// --- IR blaster: the comfort actuator (an IR LED + a TSOP receiver) ---
+// Not in the §25.6 MVP BOM — an IR LED, a resistor and an NPN are pocket
+// change, but they are parts you must actually add to this board.
+#define HAS_IR_BLASTER  1   // transmit learned codes at the AC
+#define HAS_IR_RECEIVER 1   // learn codes from the appliance's own remote
+
 // --- pins (ESP32-C6 DevKit; adjust to your wiring) ---
 #define PIN_I2C_SDA     6
 #define PIN_I2C_SCL     7
 #define PIN_LD2410_OUT  4    // LD2410's OT1 digital presence output
 #define PIN_PIR         5
 #define PIN_REED        8    // wired to GND via reed switch; INPUT_PULLUP
+#define PIN_IR_LED      10   // IR LED anode via NPN + series resistor
+#define PIN_IR_RECV     11   // TSOP38238 OUT (idle HIGH, mark pulls LOW)
+
+// --- IR carrier ---
+#define IR_CARRIER_HZ   38000  // TSOP38238 / most consumer appliances
+#define IR_DUTY_8BIT    85     // ~1/3 duty: standard for IR, easier on the LED
+
+// --- the learned codes -------------------------------------------------
+//
+// Raw mark/space durations in microseconds, alternating, starting with a
+// mark. This is a *capture*, not a protocol: DOMORA does not decode brands,
+// it replays the waveform the appliance's own remote produces. That is what
+// makes it work on an appliance no brand table covers.
+//
+// !!! THE VALUES BELOW ARE A PLACEHOLDER !!!
+// They are a generic NEC-format frame and will NOT control your AC. Build
+// with HAS_IR_RECEIVER 1, open the serial monitor, point your real remote
+// at the TSOP and press the button — the firmware prints a ready-to-paste
+// array. See nodes/env_node/README.md.
+//
+// Capture the COOL button, not a HEAT or mode-cycle button. hub/agents/
+// safety.py's capability table admits `on`/`off` and cannot check which
+// mode a code selects — this capture is the only place that is enforced.
+#define IR_AC_ON_TIMINGS  { 9000, 4500, 560, 560, 560, 1690, 560, 560, \
+                            560, 1690, 560, 560, 560, 1690, 560, 560, \
+                            560, 1690, 560, 39416 }
+#define IR_AC_OFF_TIMINGS { 9000, 4500, 560, 1690, 560, 560, 560, 1690, \
+                            560, 560, 560, 1690, 560, 560, 560, 1690, \
+                            560, 560, 560, 39416 }
+
+// Longest frame the capture buffer will hold (AC remotes send long frames;
+// 512 edges covers the verbose ones). A gap this long ends a capture.
+#define IR_CAPTURE_MAX     512
+#define IR_CAPTURE_GAP_US  20000
 
 // --- timing ---
 #define SENSE_PERIOD_MS   2000

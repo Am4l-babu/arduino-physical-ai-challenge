@@ -27,6 +27,7 @@ from hub.agents.verifier import Verifier
 from hub.core.bus import EventBus
 from hub.twin.graph import KnowledgeGraph
 from hub.twin.state import TwinState
+from sim.virtual_comfort import VirtualComfort
 from sim.virtual_house import VirtualHouse
 from sim.virtual_loads import VirtualLoads
 from sim.virtual_pump import VirtualPump
@@ -58,6 +59,8 @@ def wire(scenario: str, narrate: Callable[[int, str, str], None],
         house = VirtualLoads(bus)
     elif scenario in ("dryrun", "dryrun_stuck"):
         house = VirtualPump(bus, stuck_relay=(scenario == "dryrun_stuck"))
+    elif scenario in ("comfort", "comfort_blind"):
+        house = VirtualComfort(bus, ir_blind=(scenario == "comfort_blind"))
     else:
         house = VirtualHouse(bus, stuck_valve=(scenario == "stuck"))
 
@@ -133,7 +136,8 @@ def run(scenario: str = "leak", ticks: int = 120, quiet: bool = False,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the DOMORA closed loop against the virtual house")
     parser.add_argument("--scenario",
-                        choices=["leak", "stuck", "energy", "dryrun", "dryrun_stuck"],
+                        choices=["leak", "stuck", "energy", "dryrun", "dryrun_stuck",
+                                 "comfort", "comfort_blind"],
                         default="leak")
     parser.add_argument("--ticks", type=int, default=120)
     parser.add_argument("--journal", metavar="DB", default=None,

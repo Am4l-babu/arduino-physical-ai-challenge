@@ -1,14 +1,24 @@
 # ENV node — env1/living (ESP32-C6)
 
-Occupancy + comfort sensing for the §25.6 MVP. Sensor-only: no actuators, no
-commands to obey, so it never subscribes to `domora/cmd/#` and needs no
-hardwired reflex (that's the FLOW/POWER node's job).
+Occupancy + comfort sensing for the §25.6 MVP, plus one actuator: an IR
+blaster that drives an ordinary air conditioner — another brand's appliance,
+on no network, with no API.
 
-**Status: compiles clean against the real ESP32-C6 toolchain (arduino-cli
-1.5.0, esp32 core 3.3.9) — full sensor suite, bare board, and every partial
-mix in between. Never flashed or run on a physical board.** The parts were
-ordered the same day this firmware was written; treat pin numbers, sensor
-init, and timing as first-draft until bench-tested.
+That actuator is the reason this node matters architecturally. Every other
+actuator DOMORA commands can also be sensed: the valve reports its position,
+the pump relay has a CT clamp on it. An IR appliance answers *nothing*. So
+this node publishes only what it **transmitted** (`living_ac/ir_last_cmd`)
+and never claims to know what the appliance did — that is decided at the
+electrical panel by `hub/twin/virtual_sensors.py`'s `ACRunning`, from a
+sensor the appliance cannot influence.
+
+**Status: compiles clean (zero warnings, `--warnings all`) against the real
+ESP32-C6 toolchain (arduino-cli 1.5.0, esp32 core 3.3.9) in six
+configurations — full suite, bare board, blaster with and without radar,
+capture-only, and sensors-without-IR. Never flashed or run on a physical
+board, and the IR carrier and frame timings have never been checked against
+a scope or a real appliance.** Treat pin numbers, sensor init, and above all
+the IR timings as first-draft until bench-tested.
 
 ## Topic contract
 
@@ -25,17 +35,56 @@ the hub cannot tell this board apart from the simulator:
 | `domora/env1/living/pressure_hpa` | hPa | BME280 |
 | `domora/env1/living/lux` | lux | VEML7700 |
 | `domora/env1/living/status` | "online"/"offline" | birth message / LWT |
+| `domora/env1/living_ac/ir_last_cmd` | "on"/"off" | **what was transmitted, not appliance state** |
+
+Subscribes to `domora/cmd/living_ac/+` (the only command topic this node
+obeys). `sim/virtual_comfort.py` publishes and subscribes the identical set,
+so the comfort loop verified in simulation accepts this board unchanged.
 
 `hub/agents/observer.py` range-checks all of these (see `RANGES`); a reading
 outside physical bounds is quarantined into `health.env1.<point>`, never
-trusted into the twin silently.
+trusted into the twin silently. `ir_last_cmd` is registered there as an enum
+with a note on why it is named for the transmission rather than the state.
+
+## Learning your AC's codes
+
+DOMORA does not decode brands. It replays the waveform your own remote
+produces, which is why it works on an appliance no brand table covers.
+
+1. Wire a TSOP38238 to `PIN_IR_RECV` and build with `HAS_IR_RECEIVER 1`.
+2. Open the serial monitor at 115200, point your real remote at the TSOP and
+   press the button you want DOMORA to learn.
+3. The firmware prints a ready-to-paste `#define ..._TIMINGS { ... }` array.
+   Paste it over `IR_AC_ON_TIMINGS` / `IR_AC_OFF_TIMINGS` in `config.h`.
+
+**Capture the COOL button, not HEAT or a mode-cycle button.** The capability
+table in `hub/agents/safety.py` admits `living_ac:on`/`off` and has no way to
+check which mode a captured code selects — the button pressed here is the
+only place that is enforced. This is stated in the invariant review in that
+file, and it is a real gap, not a formality: a reversible heat pump learned
+from its HEAT button would energize a heat-producing load while passing
+every check in the hub.
+
+The shipped `IR_AC_*_TIMINGS` values are a **placeholder** NEC-format frame.
+They will not control your AC until replaced by a real capture.
+
+### Hardware note
+
+The IR LED and TSOP receiver are **not** in `docs/BOM_ORDER.md` — they are
+pocket change, but they are parts you must add. Drive the LED through an NPN
+(a GPIO cannot source useful IR current) with a series resistor; line of
+sight to the indoor unit matters, and losing it is exactly the `ir_blind`
+failure `sim/virtual_comfort.py` models.
 
 ## One firmware, role-driven
 
-`config.h`'s `HAS_*` flags gate each sensor — flip one to `0` if that part
-hasn't arrived yet or isn't wired up; the rest of the node still runs. All
-three configurations (full suite, bare board, partial mix) have been
-compile-checked.
+`config.h`'s `HAS_*` flags gate each sensor and the IR blaster — flip one to
+`0` if that part hasn't arrived yet or isn't wired up; the rest of the node
+still runs. Six configurations are compile-checked: full suite, bare board,
+blaster-without-radar, blaster-with-radar, capture-only, and
+sensors-without-IR. The blaster/radar pair is checked both ways on purpose,
+because the empty-room guard inside `ir_send_command()` is itself behind
+`#if HAS_LD2410`.
 
 ## Setup
 
@@ -78,3 +127,18 @@ compile-checked.
 - Watchdog (`esp_task_wdt`, 20 s) is written against the exact installed
   esp32 core 3.3.9 header but has never actually tripped-and-recovered on a
   real board.
+- **The IR path is entirely unverified in the physical sense.** The carrier
+  frequency, duty cycle, mark/space accuracy and LED drive have never been
+  measured; no appliance has ever responded to this firmware. Compiling is
+  not evidence that a real AC will react. First bench test should be:
+  capture a code, replay it, and confirm the unit beeps — *before* trusting
+  the closed loop.
+- `ir_send()` blocks for the length of a frame (tens of ms for a verbose AC
+  remote), which stalls `mqtt.loop()` for that time. Fine at the 20 s
+  watchdog, but unlike the tank node this board has no timing-critical
+  reflex to starve — if one is ever added here, revisit this.
+- The radar-based refusal to send `on` into an empty room (`ir_send_command`)
+  reads the same LD2410 pin that needs the one-time UART configuration in
+  step 5 above. Until that's done, `digitalRead` returns nothing meaningful
+  and the guard will refuse every `on`. Configure the LD2410 before bench-
+  testing the comfort loop, or build with `HAS_LD2410 0` to skip the guard.

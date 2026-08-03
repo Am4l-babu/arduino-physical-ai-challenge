@@ -6,7 +6,7 @@ estimation: the least glamorous and most valuable stage of the loop.
 """
 
 from hub.agents.base import Agent
-from hub.twin.virtual_sensors import PumpProtection, WaterBalance
+from hub.twin.virtual_sensors import ACRunning, PumpProtection, WaterBalance
 
 
 class Understander(Agent):
@@ -16,6 +16,7 @@ class Understander(Agent):
         super().__init__(*args, **kwargs)
         self.water_balance = WaterBalance()
         self.pump_protection = PumpProtection()
+        self.ac_running = ACRunning()
         self._announced_leak = False
         self._announced_dryrun = False
 
@@ -30,6 +31,9 @@ class Understander(Agent):
 
         self.water_balance.evaluate(self.twin)
         self.pump_protection.evaluate(self.twin)
+        # Must run before the planner and verifier tick, so an actuation is
+        # judged against this tick's panel reading rather than last tick's.
+        self.ac_running.evaluate(self.twin)
 
         if self.twin.get("virtual.water.leak_suspected") and not self._announced_leak:
             ev = self.twin.get("virtual.water.leak_evidence", {})

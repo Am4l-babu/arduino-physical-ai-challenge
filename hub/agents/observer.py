@@ -27,6 +27,11 @@ RANGES = {
     "lux": (0.0, 120000.0),
     "valve_state": None,  # enum, checked separately
     "pump_state": None,   # enum
+    # Enum, and deliberately named for what it is: the last code the IR
+    # blaster TRANSMITTED, not the appliance's state. An IR appliance
+    # reports nothing back, so no point on this bus can claim to be its
+    # state — that has to be inferred at the panel (ACRunning).
+    "ir_last_cmd": None,
 }
 
 
