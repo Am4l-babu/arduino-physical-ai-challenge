@@ -9,6 +9,7 @@ path of verification can be exercised as easily as the happy path.
 
 import random
 
+from hub.config import nodes
 from hub.core.bus import EventBus
 
 LEAK_AT = 30
@@ -46,13 +47,18 @@ class VirtualHouse:
             self.tank_level = max(0.0, self.tank_level - 0.05)
 
         noise = self.rng.uniform(-0.15, 0.15)
-        # Valve, line flow, tank level, and pump CT are one physical board
-        # (docs/BOM_ORDER.md's "FLOW/POWER — tank node": one ESP32-C6 for all
-        # of it) — one mTLS identity, so everything publishes under fp2.
-        self.bus.publish("domora/fp2/tank.line/flow_lpm", {"value": round(max(0.0, flow), 2)})
-        self.bus.publish("domora/fp2/water_tank/level_pct", {"value": round(self.tank_level + noise, 2)})
-        self.bus.publish("domora/fp2/main_valve/valve_state",
+        # Identities come from hub/config/nodes.py — the one place the
+        # board-to-role assumption lives. Flow + valve are the VALVE role,
+        # level is the TANK role; today those are the same board (fp2), and
+        # if the rig ever splits them, repointing TANK_NODE there moves the
+        # level topic without touching this file. Read via module attribute
+        # at publish time, never from-imported, so a repoint propagates.
+        self.bus.publish(f"domora/{nodes.VALVE_NODE}/tank.line/flow_lpm",
+                         {"value": round(max(0.0, flow), 2)})
+        self.bus.publish(f"domora/{nodes.TANK_NODE}/water_tank/level_pct",
+                         {"value": round(self.tank_level + noise, 2)})
+        self.bus.publish(f"domora/{nodes.VALVE_NODE}/main_valve/valve_state",
                          {"value": "open" if self.valve_open else "closed"})
-        self.bus.publish("domora/env1/living/radar", {"value": 0})
-        self.bus.publish("domora/env1/living/pir", {"value": 0})
-        self.bus.publish("domora/env1/house/fixtures_open", {"value": 0})
+        self.bus.publish(f"domora/{nodes.ENV_NODE}/living/radar", {"value": 0})
+        self.bus.publish(f"domora/{nodes.ENV_NODE}/living/pir", {"value": 0})
+        self.bus.publish(f"domora/{nodes.ENV_NODE}/house/fixtures_open", {"value": 0})

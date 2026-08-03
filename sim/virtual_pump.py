@@ -14,6 +14,7 @@ failure path is exercised as easily as its success path.
 
 import random
 
+from hub.config import nodes
 from hub.core.bus import EventBus
 
 DRY_AT = 25            # tick the suction is lost
@@ -58,6 +59,13 @@ class VirtualPump:
             self.current = self.rng.uniform(0.0, 0.05)
 
         noise = self.rng.uniform(-0.05, 0.05)
-        self.bus.publish("domora/fp2/pump/current_a", {"value": round(max(0.0, self.current), 2)})
-        self.bus.publish("domora/fp2/pump/pump_state", {"value": "on" if self.pump_on else "off"})
-        self.bus.publish("domora/fp2/water_tank/level_pct", {"value": round(self.level + noise, 2)})
+        # All three points are the TANK role (hub/config/nodes.py) — level,
+        # pump CT, and pump state live on whichever board serves the tank.
+        # Module-attribute access at publish time so repointing TANK_NODE
+        # propagates without touching this file.
+        self.bus.publish(f"domora/{nodes.TANK_NODE}/pump/current_a",
+                         {"value": round(max(0.0, self.current), 2)})
+        self.bus.publish(f"domora/{nodes.TANK_NODE}/pump/pump_state",
+                         {"value": "on" if self.pump_on else "off"})
+        self.bus.publish(f"domora/{nodes.TANK_NODE}/water_tank/level_pct",
+                         {"value": round(self.level + noise, 2)})

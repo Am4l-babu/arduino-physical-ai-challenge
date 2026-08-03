@@ -6,9 +6,10 @@ ESP32-C6 for all of it). **This is a stated assumption, not a confirmed
 physical layout** — see [nodes/README.md](../README.md). If the actual
 wiring plan needs two separate boards (e.g. the main-line valve and the
 roof tank turn out to be too far apart for one board's leads to reach),
-`sim/virtual_house.py`'s valve+flow topics and `sim/virtual_pump.py`'s
-tank+pump topics need to move back onto separate node-ids — the topic
-contract below is what would need splitting.
+the software side of the split is one edit: repoint `TANK_NODE` in
+`hub/config/nodes.py` — the simulators and PKI defaults derive from it,
+and `tests/test_node_identity.py` proves the propagation. The topic
+contract below is what physically moves to the second board.
 
 **Status: compiles clean against the real ESP32-C6 toolchain (arduino-cli
 1.5.0, esp32 core 3.3.9) in 6 configurations — full sensor suite, bare

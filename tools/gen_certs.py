@@ -16,6 +16,9 @@ import datetime
 import ipaddress
 from pathlib import Path
 
+# Imported as node_identity: provision() below has a `nodes` parameter, and
+# shadowing the module with it would be an invitation to a silent bug.
+from hub.config import nodes as node_identity
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -118,7 +121,11 @@ def provision(out_dir, nodes, broker_hosts=()) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Provision the DOMORA mTLS PKI")
     parser.add_argument("--out", default="certs")
-    parser.add_argument("--nodes", nargs="+", default=["fp1", "fp2", "env1"])
+    # Default derived from hub/config/nodes.py — the one place the
+    # board-to-role assumption lives. Splitting the water side onto two
+    # boards there grows this PKI automatically; no second list to update.
+    parser.add_argument("--nodes", nargs="+",
+                        default=node_identity.default_pki_nodes())
     parser.add_argument("--broker-host", nargs="+", default=[],
                         help="extra LAN IP(s)/hostname(s) the broker cert must "
                              "validate for — real nodes connect over Wi-Fi, not "

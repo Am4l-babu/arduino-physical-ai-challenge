@@ -14,14 +14,20 @@ five MCU families was rejected in the spec (§7.2) as a maintenance tax.
 doubles as the broker ACL username — a board can't hold two identities).
 `docs/BOM_ORDER.md`'s "FLOW/POWER — tank node" line item budgets exactly
 **one** ESP32-C6 for valve + line flow + tank level + pump CT + leak probes
-combined — so that's modeled as one node (`fp2`), not two, in `sim/` and the
-PKI defaults. **This is an assumption, not a confirmed physical layout** —
-the actual wiring/cabling plan (can one board's leads reach both the main-line
-valve and the roof tank in the demo rig?) hasn't been decided yet. If it turns
-out two boards are needed, `sim/virtual_house.py`'s valve+flow topics and
-`sim/virtual_pump.py`'s tank+pump topics need to move back onto separate
-node-ids — a small, mechanical change now that the assumption is written down
-in one place instead of scattered implicitly across files.
+combined — so that's modeled as one node (`fp2`), not two.
+**This is an assumption, not a confirmed physical layout** — the actual
+wiring/cabling plan (can one board's leads reach both the main-line valve and
+the roof tank in the demo rig?) hasn't been decided yet.
+
+The assumption lives in exactly one place:
+[`hub/config/nodes.py`](../hub/config/nodes.py), where the VALVE and TANK
+*roles* both currently point at the identity `fp2`. The simulators and the
+PKI defaults derive from it. If the rig turns out to need two boards, the
+entire software change is repointing `TANK_NODE` there (plus provisioning the
+new board's cert, which the derived `gen_certs` default then includes
+automatically) — `tests/test_node_identity.py` proves that claim by making
+exactly that edit in-memory and watching the sims, the PKI list, and both
+closed loops follow, no other file touched.
 
 Firmware rules (mirror the hub's agent contracts):
 

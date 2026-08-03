@@ -14,6 +14,7 @@ that class for why the difference is worth simulating rather than asserting.
 
 import random
 
+from hub.config import nodes
 from hub.core.bus import EventBus
 
 BASELINE_W = 80.0  # always-on: router, standby loads
@@ -78,6 +79,7 @@ class VirtualLoads:
             watts = self.ct_chain.derive_watts(active)
 
         watts += self.rng.uniform(-1.5, 1.5)   # measurement noise, either path
-        # docs/BOM_ORDER.md's "FLOW/POWER — panel node" (3x CT + PZEM) is fp1,
-        # matching tools/gen_certs.py's default node identities.
-        self.bus.publish("domora/fp1/main_panel/power_w", {"value": round(watts, 1)})
+        # The PANEL role (hub/config/nodes.py): docs/BOM_ORDER.md's
+        # "FLOW/POWER — panel node", 3x CT + PZEM, nodes/panel_node firmware.
+        self.bus.publish(f"domora/{nodes.PANEL_NODE}/main_panel/power_w",
+                         {"value": round(watts, 1)})
